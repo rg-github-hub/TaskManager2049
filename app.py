@@ -41,6 +41,12 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
+
+
+
+
+
+
 @login.user_loader
 def load_user(username):
     return User.query.get(username)
@@ -85,3 +91,9 @@ if __name__ == "__main__":
     # db.session.commit()
 
     app.run(debug = True)
+
+    #Todo 
+    # flask security
+    # flask blueprint
+    #flask sessions
+    #flask uploads
