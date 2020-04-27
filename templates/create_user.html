@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div class="card card-info">
+    <div class="card-header">
+      <h3 class="card-title">User Registration</h3>
+    </div>
+    <!-- /.card-header -->
+    <!-- form start -->
+    <form class="form-horizontal" method="POST">
+        {{ form.hidden_tag() }}
+      <div class="card-body">
+
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Name</label>
+            <div class="col-sm-10">
+                {% if form.name.errors %}
+                {{form.name(class = 'form-control is-invalid', placeholder = "Name")}}
+                {% else %}
+                {{form.name(class = 'form-control', placeholder = "Name")}}
+                {% endif %}
+                {% for i in form.name.errors %}
+                <span class="error invalid-feedback">{{i}}</span>
+                {% endfor %}
+              <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+            </div>
+          </div>
+
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label">Email</label>
+          <div class="col-sm-10">
+              {% if form.email.errors %}
+              {{form.email(class = 'form-control is-invalid', placeholder = "Email")}}
+              {% else %}
+              {{form.email(class = 'form-control', placeholder = "Email")}}
+              {% endif %}
+              {% for i in form.email.errors %}
+              <span class="error invalid-feedback">{{i}}</span>
+              {% endfor %}
+            <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+          </div>
+        </div>
+        <div class="form-group row">
+          <label  class="col-sm-2 col-form-label">Password</label>
+          <div class="col-sm-10">
+            {% if form.password.errors %}
+            {{form.password(class = 'form-control is-invalid', placeholder = "Password")}}
+            {% else %}
+            {{form.password(class = 'form-control', placeholder = "Password")}}
+            {% endif %}
+            {% for i in form.password.errors %}
+            <span class="error invalid-feedback">{{i}}</span>
+            {% endfor %}
+            <!-- <input type="password" class="form-control" id="inputPassword3" placeholder="Password"> -->
+          </div>
+        </div>
+
+        <div class="form-group row">
+            <label  class="col-sm-2 col-form-label">Password</label>
+            <div class="col-sm-10">
+              {% if form.confirm_password.errors %}
+              {{form.confirm_password(class = 'form-control is-invalid', placeholder = "Confirm Password")}}
+              {% else %}
+              {{form.confirm_password(class = 'form-control', placeholder = "Confirm Password")}}
+              {% endif %}
+              {% for i in form.confirm_password.errors %}
+              <span class="error invalid-feedback">{{i}}</span>
+              {% endfor %}
+              <!-- <input type="password" class="form-control" id="inputPassword3" placeholder="Password"> -->
+            </div>
+          </div>
+
+
+
+      <!-- /.card-body -->
+      <div class="card-footer">
+          {{form.submit(class = 'btn btn-info')}}
+        <!-- <button type="submit" class="btn btn-info">Sign in</button> -->
+      </div>
+      <!-- /.card-footer -->
+    </form>
+  </div>
+
+
+
+{% endblock %}
