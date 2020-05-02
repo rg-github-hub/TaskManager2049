@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, redirect, request
+from flask import Flask, render_template, flash, redirect, request, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, UserMixin, RoleMixin, SQLAlchemyUserDatastore, login_required, current_user, roles_required
 from flask_security.utils import hash_password, verify_password
@@ -7,6 +7,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
 from flask_bootstrap import Bootstrap
+from wtforms.widgets import TextArea
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '^&fdijfoisJIFDJFOI3483&(*&'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:Param123@localhost/png'
@@ -34,8 +36,8 @@ class Create_user(FlaskForm):
     submit=SubmitField("Create User")
 
 class ShowUser(FlaskForm):
-    name=StringField("Name",validators=[DataRequired()])
-    email = StringField("Email",validators=[DataRequired(),Email()])
+    name=StringField("Name",validators=[Length(max=50),DataRequired()])
+    email = StringField("Email",validators=[Length(max=100),DataRequired(),Email()])
     submit=SubmitField("Update details")
 
 class ChangePassword(FlaskForm):
@@ -43,6 +45,21 @@ class ChangePassword(FlaskForm):
     new_password=PasswordField("New Password",validators=[Length(min=8,max=32),DataRequired()])
     confirm_password=PasswordField("Re-enter Password",validators=[EqualTo('new_password',message="Passwords do not match, re-enter the password")])
     submit=SubmitField("Change Password")
+
+class Create_Project(FlaskForm):
+    name=StringField("Name",validators=[Length(max=40),DataRequired()])
+    description=StringField("Description",validators=[Length(max=255)],widget=TextArea())
+    submit=SubmitField("Create Project")
+
+class Show_Project(FlaskForm):
+    name=StringField("Name",validators=[Length(max=40),DataRequired()])
+    description=StringField("Description",validators=[Length(max=255)],widget=TextArea())
+    submit=SubmitField("Update Project")
+
+class Assign_user(FlaskForm):
+    user=SelectField("User Name")
+    submit=SubmitField("Add")
+
 roles_users = db.Table('roles_users', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('role_id', db.Integer, db.ForeignKey('role.id')))
 assigned_to = db.Table('assigned_to', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('project_id', db.Integer, db.ForeignKey('project.id')))
 supervises = db.Table('supervises', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('project_id', db.Integer, db.ForeignKey('project.id')))
@@ -70,6 +87,7 @@ class Role(db.Model, RoleMixin):
 class Project(db.Model):
     id= db.Column(db.Integer,primary_key= True)
     name=db.Column(db.String(40))
+    description = db.Column(db.String(255))
     is_done = db.Column(db.Boolean,default = False)
     
     # relationship with user
@@ -109,7 +127,10 @@ def home():
 def create():
     pass
 
+
 @app.route('/create_user', methods=['GET', 'POST'])
+@login_required
+@roles_required('Admin')
 def create_user():
     form=Create_user()
     if (form.validate_on_submit()):
@@ -129,13 +150,22 @@ def create_user():
 
 
 @app.route('/users')
+@login_required
+@roles_required('Admin')
+
 def users():
     u = User.query.all()
     return render_template('users.html', user_list = u)
 
 @app.route('/users/<id>',methods=['GET', 'POST'])
+@login_required
 def user(id):
+    is_admin=current_user.has_role("Admin")
+    if (not is_admin) and current_user.id != int(id):
+        flash('Accessing other user profile not allowed', 'alert-danger')
+        return redirect('/')
     u = User.query.filter_by(id=id).first()
+    is_profile_admin=u.has_role("Admin")
     form = ShowUser(name=u.name,email=u.email)
     if (form.validate_on_submit()):
         try:
@@ -148,7 +178,7 @@ def user(id):
             return redirect(f'/users/{id}')
         flash('Profile Updated', 'alert-success')
         return redirect(f'/users/{id}')
-    return render_template('user.html',is_admin=False,form = form)
+    return render_template('user.html',is_admin=is_admin, is_profile_admin = is_profile_admin,form = form,id=id)
 
 @app.route("/changepassword",methods=['GET','POST'])
 @login_required
@@ -173,9 +203,11 @@ def changepassword():
 
     return render_template('change_password.html',form=form)
 
-@login_required
+
 @app.route("/delete_user",methods=["POST"])
-def test():
+@login_required
+@roles_required('Admin')
+def delete_user():
     try:
         id=int(request.json['id'])
         if(id == current_user.id):
@@ -189,6 +221,115 @@ def test():
         return "not deleted"
     flash('User deleted successfully','alert-success')
     return "deleted"
+
+
+@app.route("/create_project",methods=["GET","POST"])
+@login_required
+@roles_required('Admin')
+def create_project():
+    form=Create_Project()
+   
+    if (form.validate_on_submit()):
+        try:
+            p=Project(name=form.name.data,description=form.description.data)
+            db.session.add(p)
+            db.session.commit()
+
+        except Exception as e:
+            print(e)
+            flash('Project could not be created', 'alert-danger')
+            return redirect('/create_project')
+        flash('Project Created', 'alert-success')
+        return redirect('/create_project')
+    
+
+    return render_template("create_project.html",form=form)
+
+@app.route('/projects')
+@login_required
+def projects():
+    p = Project.query.all()
+    return render_template('projects.html', project_list=p,is_admin=True)
+
+@app.route('/projects/<id>',methods=['GET', 'POST'])
+@login_required
+def project(id):
+    p = Project.query.filter_by(id=id).first()
+    all_users=User.query.all()
+    user_assigned=p.users
+    choices=[]
+    for user in all_users:
+        if user not in user_assigned:
+            l=[]
+            l.append(user.id)
+            l.append(f'{user.name} ({user.id})')
+            choices.append(l)
+    form = Show_Project(name=p.name,description=p.description)
+    form1 = Assign_user() 
+    form1.user.choices=choices
+    
+
+    if (form.validate_on_submit() and request.form['form-name'] == 'form'):
+        try:
+            p.name=form.name.data
+            p.description=form.description.data
+            db.session.commit()
+        except:
+            flash('Project details could not be changed', 'alert-danger')
+            return redirect(f'/projects/{id}')
+        flash('Project Updated', 'alert-success')
+        return redirect(f'/projects/{id}')
+    if(form1.is_submitted() and request.form['form-name'] == 'form1'):
+        print("abc") 
+    return render_template('project.html',is_admin=current_user.has_role('Admin'),form = form,form1=form1)
+
+
+
+
+@app.route("/delete_project",methods=["POST"])
+@roles_required('Admin')
+def delete_project():
+    try:
+        id=int(request.json['id'])
+        p=Project.query.filter_by(id=id).first()
+        db.session.delete(p)
+        db.session.commit()
+    except Exception as e:
+        print(e)
+        flash('Project was not deleted', 'alert-danger')
+        return "not deleted"
+    flash('Project deleted successfully','alert-success')
+    return "deleted"
+
+@app.route("/make_admin/<id>")
+@login_required
+@roles_required('Admin')
+def make_admin(id):
+    try:
+        u=User.query.filter_by(id=id).first()
+        user_datastore.add_role_to_user(u, 'Admin')
+        db.session.commit()
+        flash('User was made admin','alert-success')
+    except:
+        flash('User was not be made admin','alert-danger')
+    
+    return redirect(f'/users/{id}')
+
+@app.route("/remove_admin/<id>")
+@login_required
+@roles_required('Admin')
+def remove_admin(id):
+    if current_user.id == int(id):
+        flash('Can not be removed as an admin','alert-danger')
+        return redirect(f'/users/{id}')
+    try:
+        u=User.query.filter_by(id=id).first()
+        user_datastore.remove_role_from_user(u, 'Admin')
+        db.session.commit()
+        flash('User was removed as admin','alert-success')
+    except:
+        flash('Can not be removed as an admin','alert-danger')
+    return redirect(f'/users/{id}')
 
 
 if __name__ == "__main__":
@@ -213,14 +354,19 @@ if __name__ == "__main__":
 
 #User, Role, Project, Task
 
-#Admin - (Create account), create projects, assign people to a project, (edit user), edit project, (delete user) or project, task manages all projects. 
+#Admin - (Create account), (create projects), assign people to a project, (edit user), (edit project), (delete user) or (project), task manages all projects. 
 #my projects
 #routes require only admin: create_user,users, delete_user, 
 #flag variable for individual users page
 
-# (page that lists all users. only accessible by admin. This will open the edit user page.)
 
 # u = User.query.filter_by(id=1).first()
 # u.name = "abc"
 # u.email = "df.l@hj.com"
 # db.session.commit()
+
+
+#assign project managers and people to projects
+#change my project page to show my projects only if I'm not an admin
+#project page can be seen only by people assigned to it or admin
+#fix catogery of default message

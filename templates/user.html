@@ -43,6 +43,7 @@
               <span class="error invalid-feedback">{{i}}</span>
               {% endfor %}
             <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+
           </div>
         </div>
      
@@ -56,6 +57,15 @@
       
       
     </form>
+
+    {% if is_profile_admin %}
+
+    <a href="/remove_admin/{{id}}" class = 'btn btn-info'>Remove Admin</a>
+
+    {% else %}
+    <a href="/make_admin/{{id}}" class = 'btn btn-info'>Make Admin</a>
+    {% endif %}
+
   </div>
 
 {% else %}

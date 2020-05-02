@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if is_admin %}
+
+<div class="card card-info">
+    <div class="card-header">
+      <h3 class="card-title">Project Details</h3>
+    </div>
+    <!-- /.card-header -->
+    <!-- form start -->
+    <form class="form-horizontal" method="POST">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="form-name" value="form">
+      <div class="card-body">
+
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Project Name</label>
+            <div class="col-sm-10">
+                {% if form.name.errors %}
+                {{form.name(class = 'form-control is-invalid', placeholder = "Project Name")}}
+                {% else %}
+                {{form.name(class = 'form-control', placeholder = "Project Name")}}
+                {% endif %}
+                {% for i in form.name.errors %}
+                <span class="error invalid-feedback">{{i}}</span>
+                {% endfor %}
+              <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+            </div>
+          </div>
+
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label">Description</label>
+          <div class="col-sm-10">
+              {% if form.description.errors %}
+              {{form.description(class = 'form-control is-invalid', placeholder = "Description", rows="3")}}
+              {% else %}
+              {{form.description(class = 'form-control', placeholder = "Description", rows="3")}}
+              {% endif %}
+              {% for i in form.description.errors %}
+              <span class="error invalid-feedback">{{i}}</span>
+              {% endfor %}
+            <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+          </div>
+        </div>
+     
+        
+
+
+
+      <!-- /.card-body -->
+    
+          {{form.submit(class = 'btn btn-info')}}
+      
+      
+    </form>
+    </div>
+  </div>
+
+
+{% else %}
+<div class="card card-info">
+  <div class="card-header">
+    <h3 class="card-title">Project Details</h3>
+  </div>
+  <!-- /.card-header -->
+  <!-- form start -->
+  
+    <div class="card-body">
+
+
+      <div class="form-group row">
+          <label>Project Name : </label> 
+          <div class="col-sm-10">
+              {{form.name.data}}
+            <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+          </div>
+        </div>
+
+
+      <div class="form-group row">
+        <label>Description :</label> 
+        <div class="col-sm-10">
+            {{form.description.data}}
+          
+        </div>
+      
+
+</div>
+</div>
+</div>
+{% endif %}
+
+<div class="card card-info">
+  <div class="card-header">
+    <h3 class="card-title">User Assignment</h3>
+  </div>
+  <!-- /.card-header -->
+  <!-- form start -->
+  <form class="form-horizontal" method="POST">
+
+      {{ form1.hidden_tag() }}
+    <div class="card-body">
+
+<input type="hidden" name="form-name" value="form1">
+      <div class="form-group row">
+          <label class="col-sm-2 col-form-label">User Name</label>
+          <div class="col-sm-10">
+              {{form1.user(class="form-control select2",style="width: 100%;")}}
+            <!-- <input type="email" class="form-control" id="inputEmail3" placeholder="Email"> -->
+          </div>
+        </div>
+
+
+      
+      
+
+
+
+    <!-- /.card-body -->
+  
+        {{form1.submit(class = 'btn btn-info')}}
+    
+    
+  </form>
+</div>
+</div>
+
+
+
+
+
+
+
+{% endblock %}
+
