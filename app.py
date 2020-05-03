@@ -6,18 +6,18 @@ from flask_mail import Mail,Message
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
-from flask_bootstrap import Bootstrap
+
 from wtforms.widgets import TextArea
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '^&fdijfoisJIFDJFOI3483&(*&'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:Param123@localhost/png'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:abhay1234@localhost/png'
 app.config['SECURITY_PASSWORD_SALT'] = 'dfdgsdfsadfasg'
 # app.config['SECURITY_REGISTERABLE'] = True
 # app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_RECOVERABLE'] = True
 db = SQLAlchemy(app)
-Bootstrap(app)
+
 
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -257,6 +257,8 @@ def project(id):
     p = Project.query.filter_by(id=id).first()
     all_users=User.query.all()
     user_assigned=p.users
+    supervisors=p.supervisors
+    user_assigned=[i for i in  user_assigned if i not in supervisors]
     choices=[]
     for user in all_users:
         if user not in user_assigned:
@@ -280,8 +282,18 @@ def project(id):
         flash('Project Updated', 'alert-success')
         return redirect(f'/projects/{id}')
     if(form1.is_submitted() and request.form['form-name'] == 'form1'):
-        print("abc") 
-    return render_template('project.html',is_admin=current_user.has_role('Admin'),form = form,form1=form1)
+        try:
+            user_id=int(form1.user.data)
+            u=User.query.filter_by(id=user_id).first()
+            p.users.append(u)
+            db.session.commit()
+            flash('User was added to this project', 'alert-success') 
+            
+        except Exception as e:
+            print(e)
+            flash('User was not added to the project','alert-danger')
+        return redirect(f'/projects/{id}')       
+    return render_template('project.html',is_admin=current_user.has_role('Admin'),form = form,form1=form1,user_assigned=user_assigned,id=id,supervisors=supervisors)
 
 
 
@@ -331,6 +343,46 @@ def remove_admin(id):
         flash('Can not be removed as an admin','alert-danger')
     return redirect(f'/users/{id}')
 
+@app.route("/make_manager/<user_id>/<project_id>")
+def make_manager(user_id,project_id):
+    try:
+        p=Project.query.filter_by(id=project_id).first()
+        u=User.query.filter_by(id=user_id).first()
+        p.supervisors.append(u)
+        db.session.commit()
+        flash('User was made manager','alert-success')
+    except Exception as e:
+        print(e)
+        flash('User was not made manager','alert-danger')
+    return redirect(f'/projects/{project_id}')
+
+@app.route("/remove_manager/<user_id>/<project_id>")
+def remove_manager(user_id,project_id):
+    try:
+        p=Project.query.filter_by(id=project_id).first()
+        u=User.query.filter_by(id=user_id).first()
+        p.supervisors.remove(u)
+        db.session.commit()
+        flash('User was made assignee','alert-success')
+    except Exception as e:
+        print(e)
+        flash('User was not made assignee','alert-danger')
+    return redirect(f'/projects/{project_id}')
+
+@app.route("/remove_assignee/<user_id>/<project_id>")
+def remove_assignee(user_id,project_id):
+    try:
+        p=Project.query.filter_by(id=project_id).first()
+        u=User.query.filter_by(id=user_id).first()
+        p.users.remove(u)
+        db.session.commit()
+        flash('User was removed from project','alert-success')
+    except Exception as e:
+        print(e)
+        flash('User was not removed from project','alert-danger')
+    return redirect(f'/projects/{project_id}')
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -354,7 +406,7 @@ if __name__ == "__main__":
 
 #User, Role, Project, Task
 
-#Admin - (Create account), (create projects), assign people to a project, (edit user), (edit project), (delete user) or (project), task manages all projects. 
+#Admin - (Create account), (create projects), (assign people to a project), (edit user), (edit project), (delete user) or (project), task manages all projects. 
 #my projects
 #routes require only admin: create_user,users, delete_user, 
 #flag variable for individual users page
@@ -366,7 +418,5 @@ if __name__ == "__main__":
 # db.session.commit()
 
 
-#assign project managers and people to projects
-#change my project page to show my projects only if I'm not an admin
-#project page can be seen only by people assigned to it or admin
+#in project page check if the person is manager and only show button to appropriate manager and admins, also add restrictions to the path
 #fix catogery of default message

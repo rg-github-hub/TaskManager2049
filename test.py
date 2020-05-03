@@ -44,3 +44,9 @@ class T2(db.Model):
 # db.session.commit()
 # s = T1.query.filter_by(subject="English", t2 = obj2)
 
+l=[1,2,3,4,5]
+l1=[]
+for i in l:
+    if i%2==0:
+        l1.append(i*2)
+l1=[i*2 for i in l if i%2==0]
