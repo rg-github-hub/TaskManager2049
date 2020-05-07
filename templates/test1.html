@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="POST">
+        {{form.hidden_tag()}}
+        <div class="form-group">
+            {{form.description(id="compose")}}
+        </div>
+        {{form.submit}}
+    </form>
+    {% endblock %}
+    {% block script %}
+    <script src="/static/plugins/summernote/summernote-bs4.min.js"></script>
+    <!-- Page Script -->
+    <script>
+    $(function () {
+        //Add text editor
+        console.log("abcdefgh")
+        $('#compose').summernote()
+    })
+    </script>
+    
+{% endblock %}
+

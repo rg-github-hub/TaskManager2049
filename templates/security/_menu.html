@@ -1,0 +1,17 @@
+{% if security.registerable or security.recoverable or security.confirmable %}
+
+
+  {% if security.recoverable %}
+  <p class="mb-1">
+  <a href="{{ url_for_security('forgot_password') }}">{{ _('Forgot password') }}</a>
+  </p>
+  {% endif %}
+  {% if security.confirmable %}
+  <p class="mb-1">
+  <a href="{{ url_for_security('send_confirmation') }}">{{ _('Confirm account') }}</a>
+  </p>
+  {% endif %}
+
+{% endif %}
+
+

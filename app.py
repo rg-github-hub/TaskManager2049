@@ -4,8 +4,10 @@ from flask_security import Security, UserMixin, RoleMixin, SQLAlchemyUserDatasto
 from flask_security.utils import hash_password, verify_password
 from flask_mail import Mail,Message
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField
-from wtforms.validators import DataRequired, Email, Length, EqualTo
+from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField,RadioField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
+from wtforms.fields.html5 import DateField, DateTimeField
+from datetime import datetime
 
 from wtforms.widgets import TextArea
 
@@ -18,20 +20,18 @@ app.config['SECURITY_PASSWORD_SALT'] = 'dfdgsdfsadfasg'
 app.config['SECURITY_RECOVERABLE'] = True
 db = SQLAlchemy(app)
 
-
-
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'param.gupta290999@gmail.com'
-app.config['MAIL_PASSWORD'] = 'hfgrpwulyrutrlmo'
-app.config['SECURITY_EMAIL_SENDER'] = 'param.gupta290999@gmail.com'
+app.config['MAIL_USERNAME'] = 'aggarwal.abhay1999@gmail.com'
+app.config['MAIL_PASSWORD'] = 'czxxzbydawemifjv'
+app.config['SECURITY_EMAIL_SENDER'] = 'aggarwal.abhay1999@gmail.com'
 mail = Mail(app)
 
 class Create_user(FlaskForm):
     name=StringField("Name",validators=[DataRequired()])
     email = StringField("Email",validators=[DataRequired(),Email()])
-    password=PasswordField("Password",validators=[Length(min=8,max=32),DataRequired()])
+    password=PasswordField("Password",validators=[Length(min=6,max=32),DataRequired()])
     confirm_password=PasswordField("Re-enter Password",validators=[EqualTo('password',message="Passwords do not match, re-enter the password")])
     submit=SubmitField("Create User")
 
@@ -60,10 +60,17 @@ class Assign_user(FlaskForm):
     user=SelectField("User Name")
     submit=SubmitField("Add")
 
+class Create_task(FlaskForm):
+    name=StringField("Task Name",validators=[Length(max=256),DataRequired()])
+    description=StringField("Task Description",validators=[Length(max=10000)])
+    priority=RadioField("Priority", choices=[["0"," Low"],["1"," Medium"],["2"," High"]])
+    deadline=DateTimeField("Deadline",default=datetime.now(),validators=[DataRequired()])
+    add_user=SelectField("Assigning to User",validators=[DataRequired()])
+    submit=SubmitField("Add Task")
+
 roles_users = db.Table('roles_users', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('role_id', db.Integer, db.ForeignKey('role.id')))
 assigned_to = db.Table('assigned_to', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('project_id', db.Integer, db.ForeignKey('project.id')))
 supervises = db.Table('supervises', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('project_id', db.Integer, db.ForeignKey('project.id')))
-
 
 
 class User(db.Model, UserMixin):
@@ -95,11 +102,11 @@ class Project(db.Model):
 class Task(db.Model):
     id= db.Column(db.Integer,primary_key= True)
     name=db.Column(db.String(256))
-    description=db.Column(db.String(10000))
+    description=db.Column(db.Binary)
     is_done = db.Column(db.Boolean, default = False)
     create_date=db.Column(db.DateTime)
     deadline=db.Column(db.DateTime)
-    priority=db.Column(db.String(20)) 
+    priority=db.Column(db.Integer) 
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
     user = db.relationship('User',backref = db.backref('tasks'))
     project_id=db.Column(db.Integer,db.ForeignKey('project.id'))
@@ -248,8 +255,9 @@ def create_project():
 @app.route('/projects')
 @login_required
 def projects():
-    p = Project.query.all()
-    return render_template('projects.html', project_list=p,is_admin=True)
+    is_admin=current_user.has_role('Admin')
+    p = Project.query.all() if is_admin else current_user.projects
+    return render_template('projects.html', project_list=p,is_admin=is_admin)
 
 @app.route('/projects/<id>',methods=['GET', 'POST'])
 @login_required
@@ -269,9 +277,11 @@ def project(id):
     form = Show_Project(name=p.name,description=p.description)
     form1 = Assign_user() 
     form1.user.choices=choices
-    
+    is_admin=current_user.has_role('Admin')
+    is_manager=True if current_user in supervisors else False
 
-    if (form.validate_on_submit() and request.form['form-name'] == 'form'):
+
+    if (form.validate_on_submit() and request.form['form-name'] == 'form' and is_admin):
         try:
             p.name=form.name.data
             p.description=form.description.data
@@ -281,7 +291,7 @@ def project(id):
             return redirect(f'/projects/{id}')
         flash('Project Updated', 'alert-success')
         return redirect(f'/projects/{id}')
-    if(form1.is_submitted() and request.form['form-name'] == 'form1'):
+    if(form1.is_submitted() and request.form['form-name'] == 'form1' and (is_admin or is_manager)):
         try:
             user_id=int(form1.user.data)
             u=User.query.filter_by(id=user_id).first()
@@ -293,9 +303,7 @@ def project(id):
             print(e)
             flash('User was not added to the project','alert-danger')
         return redirect(f'/projects/{id}')       
-    return render_template('project.html',is_admin=current_user.has_role('Admin'),form = form,form1=form1,user_assigned=user_assigned,id=id,supervisors=supervisors)
-
-
+    return render_template('project.html',is_admin=is_admin,is_manager=is_manager,form = form,form1=form1,user_assigned=user_assigned,id=id,supervisors=supervisors)
 
 
 @app.route("/delete_project",methods=["POST"])
@@ -344,6 +352,8 @@ def remove_admin(id):
     return redirect(f'/users/{id}')
 
 @app.route("/make_manager/<user_id>/<project_id>")
+@login_required
+@roles_required('Admin')
 def make_manager(user_id,project_id):
     try:
         p=Project.query.filter_by(id=project_id).first()
@@ -357,6 +367,8 @@ def make_manager(user_id,project_id):
     return redirect(f'/projects/{project_id}')
 
 @app.route("/remove_manager/<user_id>/<project_id>")
+@login_required
+@roles_required('Admin')
 def remove_manager(user_id,project_id):
     try:
         p=Project.query.filter_by(id=project_id).first()
@@ -370,18 +382,71 @@ def remove_manager(user_id,project_id):
     return redirect(f'/projects/{project_id}')
 
 @app.route("/remove_assignee/<user_id>/<project_id>")
+@login_required
 def remove_assignee(user_id,project_id):
-    try:
-        p=Project.query.filter_by(id=project_id).first()
-        u=User.query.filter_by(id=user_id).first()
-        p.users.remove(u)
-        db.session.commit()
-        flash('User was removed from project','alert-success')
-    except Exception as e:
-        print(e)
-        flash('User was not removed from project','alert-danger')
+    p=Project.query.filter_by(id=project_id).first()
+    is_admin=current_user.has_role('Admin')
+    is_manager=True if current_user in p.supervisors else False
+    
+    if is_admin or is_manager:
+
+        try:
+            u=User.query.filter_by(id=user_id).first()
+            p.users.remove(u)
+            db.session.commit()
+            flash('User was removed from project','alert-success')
+        except Exception as e:
+            print(e)
+            flash('User was not removed from project','alert-danger')
     return redirect(f'/projects/{project_id}')
 
+@app.route("/create_task/<project_id>",methods=["POST","GET"])
+@login_required
+def create_task(project_id):
+    p=Project.query.filter_by(id=project_id).first()
+    is_admin=current_user.has_role('Admin')
+    is_manager=True if current_user in p.supervisors else False
+    
+    if not (is_admin or is_manager):
+        return redirect(f'/projects/{project_id}')
+    form=Create_task()
+    choices=[]
+    for user in p.users:
+        l=[]
+        l.append(str(user.id))
+        l.append(f'{user.name} ({user.id})')
+        choices.append(l)
+    form.add_user.choices=choices
+    if form.validate_on_submit():
+        try:
+            u=User.query.filter_by(id=form.add_user.data).first()
+            print(form.description.data)
+            t=Task(name=form.name.data,description=bytes(form.description.data,"utf8"),deadline=form.deadline.data,priority=form.priority.data,project=p,user=u)
+            print(bytes(form.description.data,"utf8"))
+            db.session.add(t)
+            db.session.commit()
+            flash("Task was created","alert-success")
+        except Exception as e:
+            print(e)
+            flash("Task was not created","alert-danger")
+        return redirect(f'/projects/{project_id}')
+    return render_template("create_task.html",form=form)
+    
+class Testform(FlaskForm):
+    description=StringField("Description",validators=[Optional()],widget=TextArea())
+    submit=SubmitField()
+
+@app.route("/test1",methods=["GET","POST"])
+def testform():
+    ft=Task.query.filter_by(id=4).first()
+
+    print (ft.description)
+    return (ft.description)
+    
+
+@app.route("/calender",methods=["GET","POST"])
+def calender():
+    return render_template("calender.html")
 
 
 if __name__ == "__main__":
@@ -408,8 +473,7 @@ if __name__ == "__main__":
 
 #Admin - (Create account), (create projects), (assign people to a project), (edit user), (edit project), (delete user) or (project), task manages all projects. 
 #my projects
-#routes require only admin: create_user,users, delete_user, 
-#flag variable for individual users page
+
 
 
 # u = User.query.filter_by(id=1).first()
@@ -418,5 +482,7 @@ if __name__ == "__main__":
 # db.session.commit()
 
 
-#in project page check if the person is manager and only show button to appropriate manager and admins, also add restrictions to the path
 #fix catogery of default message
+#Add title to every page
+# add user should be put in modal and put this button in assigned users card
+#datetime validator 

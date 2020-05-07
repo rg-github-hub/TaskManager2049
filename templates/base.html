@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
   <!-- Tempusdominus Bbootstrap 4 -->
   <link rel="stylesheet" href="/static/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+  <!-- DateTimePicker -->
+  <link rel="stylesheet" href="/static/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css">
   <!-- iCheck -->
   <link rel="stylesheet" href="/static/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
   <!-- JQVMap -->
@@ -50,13 +52,87 @@
   </nav>
   <!-- /.navbar -->
 
-  <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-dark-primaryy elevation-4">
+ <!-- Main Sidebar Container -->
+ <aside class="main-sidebar sidebar-dark-primaryy elevation-4">
+  <!-- Brand Logo -->
+  <a href="/" class="brand-link">
+    <img src="/static/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
+         style="opacity: .8">
+    <span class="brand-text font-weight-heavy">Abhay</span>
+  </a>
     
-
-    <!-- Sidebar -->
+  <!-- Sidebar -->
+  {% if current_user.is_authenticated %}
     <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <ion-icon style="color:#6c757d" size="large" name="person-circle-outline"></ion-icon>
+
+          <!-- <img src="/static/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image"> -->
+        </div>
+        
+          <div class="info">
+            
+            <a href="/users/{{current_user.id}}" class="d-block">  
+              <strong>
+              {{current_user.name}}
+            </strong>
+            
+            </a>
+          </div>
       </div>
+    {% endif %}
+
+    <!-- Sidebar Menu-->
+    <div class="sidebar">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          {% if current_user.is_authenticated and current_user.has_role("Admin") %}
+            <li class="nav-item">
+              <a href="/users" class="nav-link {% if page=="Users" %}active{% endif %}">
+                <i class="nav-icon fas fa-users"></i>
+                <p>
+                Users
+                </p>
+              </a>
+            </li>
+          {% endif %}
+          {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a href="/projects" class="nav-link {% if page=="Projects" %}active{% endif %}">
+                <i class="nav-icon fas fa-copy"></i>
+                <p>
+                  Projects
+                </p>
+              </a>
+            </li>
+          {% endif %}
+          {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a href="/logout" class="nav-link {% if page=="Log Out" %}active{% endif %}">
+                <i class="nav-icon ion ion-log-out"></i>
+                <!-- <ion-icon name="log-out-outline"></ion-icon> -->
+                <p>
+                  Log Out
+                </p>
+              </a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a href="/login" class="nav-link {% if page=="Login" %}active{% endif %}">
+                <i class="nav-icon ion ion-log-in"></i>
+                <p>
+                  Log in
+                </p>
+              </a>
+            </li>
+          {% endif %}
+      
+
+        </ul>
+      </nav>
+    </div>
     <!-- /.sidebar -->
   </aside>
 
@@ -75,21 +151,12 @@
     </div>
     <!-- /.content-header -->
 
+  
+
     <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <!-- <li class="{{ category }}">{{ message }}</li> -->
-      <div class="alert {{category}} alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-        <h5><i class="icon fas {% if category=="alert-danger" %}fa-exclamation-triangle{% else %}fa-check{% endif %}"></i> {{ message }}</h5>
-        
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+        {%include "messages.html" %}
         {% block content %}
         {% endblock %}
       </div><!-- /.container-fluid -->
@@ -98,10 +165,10 @@
   </div>
   <!-- /.content-wrapper -->
   <footer class="main-footer">
-    <strong>Copyright &copy; of <a href="http://adminlte.io"> Abhay Aggarwal</a>.</strong>
+    <strong>Copyright &copy; of <a href="#"> Abhay Aggarwal</a>.</strong>
     All rights reserved.
     <div class="float-right d-none d-sm-inline-block">
-      <b>Version</b> 3.0.4
+      <b>Version</b> 1.0.0
     </div>
   </footer>
 
@@ -123,6 +190,8 @@
 </script>
 <!-- Bootstrap 4 -->
 <script src="/static/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/plugins/moment.js"></script>
+<script src="/static/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
 <!-- ChartJS -->
 <script src="/static/plugins/chart.js/Chart.min.js"></script>
 <!-- Sparkline -->
@@ -147,16 +216,18 @@
 <script src="/static/dist/js/pages/dashboard.js"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="/static/dist/js/demo.js"></script>
+<script src="https://unpkg.com/ionicons@5.0.0/dist/ionicons.js"></script>
 <!-- Select2 -->
 <script src="/static/plugins/select2/js/select2.full.min.js"></script>
 <script>
   $(function () {
     //Initialize Select2 Elements
     $('.select2').select2()
-
+    $('#compose').summernote()
+    $('#datetimepicker1').datetimepicker();
 
   })
-  </script>
+</script>
 {% block script %}
 {% endblock %}
 </body>
