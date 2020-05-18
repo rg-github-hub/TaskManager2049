@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% set page = "Calendar" %}
+{% block content %}
+    <!-- THE CALENDAR -->
+    
+    <div class="row">
+      <div class="col-md-3">
+        <div class="sticky-top mb-3">
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h4 class="card-title">Draggable Tasks</h4>
+              
+                <button id="save" type="button" class="btn btn-primary float-right" >Save</button>
+            </div>
+            <div class="card-body">
+              <!-- the events -->
+              <div id="external-events">
+                
+                
+              </div>
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+
+
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">Create Task</h3>
+            </div>
+            <div class="card-body">
+              <div class="btn-group" style="width: 100%; margin-bottom: 10px;">
+                <!--<button type="button" id="color-chooser-btn" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown">Color <span class="caret"></span></button>-->
+                <ul class="fc-color-picker" id="color-chooser">
+                  <li><a class="text-primary" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-warning" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-success" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-danger" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-muted" href="#"><i class="fas fa-square"></i></a></li>
+                </ul>
+              </div>
+              <!-- /btn-group -->
+              
+              <div class="input-group">
+                <input id="new-event" type="text" class="form-control" placeholder="Event Title">
+
+                <div class="input-group-append">
+                  <button id="add-new-event" type="button" class="btn btn-primary">Add</button>
+                </div>
+                
+                
+                
+                <!-- /btn-group -->
+              </div>
+              <!-- /input-group -->
+            </div>
+          </div>
+          
+
+        
+            <!-- small box -->
+
+
+            <div class="small-box bg-danger" id="trash" style="height: 105px;">
+              <div class="inner" >
+                <h4>Drag here <br>to Delete</h4>
+      
+                
+              </div>
+              <div class="icon">
+                <i class="fa fa-trash" style="color: white"></i>
+              </div>
+              
+            </div>
+          </div>
+        
+      </div>
+      <!-- /.col -->
+      <div class="col-md-9">
+        <div class="card card-primary card-outline">
+          <div class="card-body p-0">
+            <!-- THE CALENDAR -->
+            <div id="calendar"></div>
+          </div>
+          <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+      </div>
+      <!-- /.col -->
+    </div>
+{% endblock %}
+
+{% block script%}
+<!-- fullCalendar 2.2.5 -->
+<script src="/static/plugins/moment/moment.min.js"></script>
+<script src="/static/plugins/fullcalendar/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-daygrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-timegrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-interaction/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-bootstrap/main.min.js"></script>
+
+<!-- Page specific script -->
+<script>
+
+  $(function () {
+
+    /* initialize the external events
+     -----------------------------------------------------------------*/
+    function ini_events(ele) {
+      ele.each(function () {
+
+        // create an Event Object (http://arshaw.com/fullcalendar/docs/event_data/Event_Object/)
+        // it doesn't need to have a start or end
+        var eventObject = {
+          title: $.trim($(this).text()), // use the element's text as the event title
+          id:"1",
+          classNames: ["test"]
+        
+        }
+
+        // store the Event Object in the DOM element so we can get to it later
+        $(this).data('eventObject', eventObject)
+
+        // make the event draggable using jQuery UI
+        $(this).draggable({
+          zIndex        : 1070,
+          revert        : true, // will cause the event to go back to its
+          revertDuration: 0  //  original position after the drag
+        })
+
+      })
+    }
+
+    ini_events($('#external-events div.external-event'))
+
+    /* initialize the calendar
+     -----------------------------------------------------------------*/
+    //Date for the calendar events (dummy data)
+    var date = new Date()
+    var d    = date.getDate(),
+        m    = date.getMonth(),
+        y    = date.getFullYear()
+
+    var Calendar = FullCalendar.Calendar;
+    var Draggable = FullCalendarInteraction.Draggable;
+
+    var containerEl = document.getElementById('external-events');
+    var checkbox = document.getElementById('drop-remove');
+    var calendarEl = document.getElementById('calendar');
+
+    // initialize the 
+    // -----------------------------------------------------------------
+
+    new Draggable(containerEl, {
+      itemSelector: '.external-event',
+      eventData: function(eventEl) {
+        console.log(eventEl);
+        return {
+          title: eventEl.innerText,
+          classNames:["MyTask"],
+
+          backgroundColor: window.getComputedStyle( eventEl ,null).getPropertyValue('background-color'),
+          borderColor: window.getComputedStyle( eventEl ,null).getPropertyValue('background-color'),
+          textColor: window.getComputedStyle( eventEl ,null).getPropertyValue('color'),
+        };
+      }
+    });
+
+    var calendar = new Calendar(calendarEl, {
+      plugins: [ 'bootstrap', 'interaction', 'dayGrid' ],
+      header    : {
+        left  : 'prev today',
+        center: 'title',
+        right : 'next'
+      },
+      'themeSystem': 'bootstrap',
+      editable  : true,eventResourceEditable: true,
+      
+      events    : [
+          {% for i in tasks %}
+          {% if i.deadline or i.start_date %}
+          {% if loop.index != 1 %},
+          {% endif %}
+      {
+        
+        editable:false,
+        
+          title          : '{{i.name}}',
+          {% if i.start_date %}
+          start          : new Date({{i.start_date.year}}, {{i.start_date.month-1}},{{i.start_date.day}}, {{i.start_date.hour}}, {{i.start_date.minute}} ),
+          
+          {% if i.deadline %}
+            end         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+          {% else %}
+          start         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+
+          
+          //start          : new Date(y,{{i.deadline.month}}-1 , {{i.deadline.day}}, 10, 30),
+          
+          {% if i.priority==0 %}
+          backgroundColor:'#007bff', //blue
+          borderColor:'#007bff', //blue
+          {% elif i.priority==1 %}
+          textColor:' #000000',
+          backgroundColor:'#ffc107',
+          borderColor:'#ffc107',
+          {% else %}
+          backgroundColor:'#dc3545',
+          borderColor:'#dc3545',
+          {% endif %}
+          allDay         : false,
+          url            : '/view_task/{{i.id}}'
+        }
+        {% endif %}
+
+        {% endfor %}
+
+
+
+
+
+
+
+
+
+
+        {% if tasks.count()>0 %}
+          ,
+        {% endif %}
+        {% for i in saved_tasks %}
+          {% if loop.index != 1 %},
+          {% endif %}
+          {
+          title          : "{{i.title}}",
+          start          : new Date("{{i.start}}"),
+          end            : new Date("{{i.end}}"),
+          allDay         : true,
+          backgroundColor: "{{i.backgroundColor}}", //Success (green)
+          editable:true,
+          durationEditable:true,
+          classNames: ["MyTask"] 
+        }
+
+        {% endfor %}
+      ],
+      
+      
+      eventDrop: function(info){
+        console.log(info)
+      },
+      eventDragStop: function(e) {
+            
+            
+            let trashEl = document.getElementById('trash');
+            var rect=trashEl.getBoundingClientRect();
+            
+            let x1 = trashEl.offsetLeft;
+            
+            let x2 = trashEl.offsetLeft + trashEl.offsetWidth;
+            let y1 = trashEl.offsetTop;
+            let y2 = trashEl.offsetTop + trashEl.offsetHeight;
+            console.log(x1)
+            console.log(x2)
+            console.log(y1)
+            console.log(y2)
+            console.log(e.jsEvent.pageX)
+            console.log(e.jsEvent.pageY)
+            console.log(rect)
+            if (e.jsEvent.pageX >= rect.left && e.jsEvent.pageX <= rect.right &&
+                e.jsEvent.pageY >=rect.top  && e.jsEvent.pageY <= rect.bottom) {
+                    e.event.remove();
+            }
+        },
+      droppable : true, // this allows things to be dropped onto the calendar !!!
+      drop      : function(info) {
+        // is the "remove after drop" checkbox checked?
+        
+          // if so, remove the element from the "Draggable Events" list
+          info.draggedEl.parentNode.removeChild(info.draggedEl);
+        
+      }    
+    });
+
+    calendar.render();
+    // $('#calendar').fullCalendar()
+
+    /* ADDING EVENTS */
+    var currColor = '#3c8dbc' //Red by default
+    //Color chooser button
+    var colorChooser = $('#color-chooser-btn')
+    $('#color-chooser > li > a').click(function (e) {
+      e.preventDefault()
+      //Save color
+      currColor = $(this).css('color')
+      //Add color effect to button
+      $('#add-new-event').css({
+        'background-color': currColor,
+        'border-color'    : currColor
+      })
+    })
+    $('#add-new-event').click(function (e) {
+      e.preventDefault()
+      //Get value and make sure it is not null
+      var val = $('#new-event').val()
+      if (val.length == 0) {
+        return
+      }
+
+      //Create events
+      var event = $('<div />')
+      event.css({
+        'background-color': currColor,
+        'border-color'    : currColor,
+        'color'           : '#fff'
+      }).addClass('external-event')
+      event.html(val)
+      $('#external-events').prepend(event)
+
+      //Add draggable funtionality
+      ini_events(event)
+
+      //Remove event from text input
+      $('#new-event').val('')
+    })
+    document.getElementById("save").addEventListener("click",function(){
+      
+      events=calendar.getEvents()
+      ourEvents=[]
+      for(var i=0;i<events.length;i++){
+
+        if(events[i].classNames.length >0){
+          let data={
+            start:events[i].start,
+            end:events[i].end,
+            title:events[i].title,
+            backgroundColor:events[i].backgroundColor
+          }
+          ourEvents.push(data)
+        }
+      }
+      
+		const otherPram={
+			headers:{
+				"Content-Type":"application/json; charset=UTF-8"
+			},
+			body:JSON.stringify(ourEvents),
+			method:"POST"
+		};
+		fetch('/save_mytask', otherPram).then(function(response){
+      if(response.status==200){
+        toastr.success("Tasks were saved successfully")
+      }
+      else{
+        toastr.error("Tasks were not saved")
+      }
+    });
+      console.log(ourEvents)
+    })
+    window.addEventListener("beforeunload", function (e) {
+    var confirmationMessage = 'It looks like you have been editing something. '
+                            + 'If you leave before saving, your changes will be lost.';
+
+    (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+    return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+});
+  })
+
+</script>
+
+{% endblock %}

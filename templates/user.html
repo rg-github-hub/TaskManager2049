@@ -4,7 +4,7 @@
 
 {% if is_admin %}
 
-<div class="card card-info">
+<div class="card card-secondary card-outline">
     <div class="card-header">
       <h3 class="card-title">User Details</h3>
     </div>
@@ -53,23 +53,23 @@
 
       <!-- /.card-body -->
     
-          {{form.submit(class = 'btn btn-info')}}
+          {{form.submit(class = 'btn btn-secondary')}}
       
       
     </form>
 
     {% if is_profile_admin %}
 
-    <a href="/remove_admin/{{id}}" class = 'btn btn-info'>Remove Admin</a>
+    <a href="/remove_admin/{{id}}" class = 'btn btn-secondary'>Remove Admin</a>
 
     {% else %}
-    <a href="/make_admin/{{id}}" class = 'btn btn-info'>Make Admin</a>
+    <a href="/make_admin/{{id}}" class = 'btn btn-secondary'>Make Admin</a>
     {% endif %}
 
   </div>
 
 {% else %}
-<div class="card card-info">
+<div class="card card-secondary card-outline">
   <div class="card-header">
     <h3 class="card-title">User Details</h3>
   </div>
@@ -96,7 +96,7 @@
         </div>
       </div>
 
-    <a href="/changepassword" class = 'btn btn-info'>Change Password</a>
+    <a href="/changepassword" class = 'btn btn-secondary'>Change Password</a>
 </div>
 
 

@@ -1,13 +1,14 @@
-from flask import Flask, render_template, flash, redirect, request, request
+from flask import Flask, render_template, flash, redirect, request, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, UserMixin, RoleMixin, SQLAlchemyUserDatastore, login_required, current_user, roles_required
 from flask_security.utils import hash_password, verify_password
 from flask_mail import Mail,Message
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField,RadioField
+from wtforms import StringField, PasswordField, SubmitField, DateField, SelectField,RadioField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
-from wtforms.fields.html5 import DateField, DateTimeField
-from datetime import datetime
+from wtforms.fields.html5 import DateField, DateTimeField, DateTimeLocalField, TimeField
+from datetime import datetime,date
+import uuid 
 
 from wtforms.widgets import TextArea
 
@@ -27,6 +28,8 @@ app.config['MAIL_USERNAME'] = 'aggarwal.abhay1999@gmail.com'
 app.config['MAIL_PASSWORD'] = 'czxxzbydawemifjv'
 app.config['SECURITY_EMAIL_SENDER'] = 'aggarwal.abhay1999@gmail.com'
 mail = Mail(app)
+
+
 
 class Create_user(FlaskForm):
     name=StringField("Name",validators=[DataRequired()])
@@ -57,16 +60,32 @@ class Show_Project(FlaskForm):
     submit=SubmitField("Update Project")
 
 class Assign_user(FlaskForm):
-    user=SelectField("User Name")
+    user=StringField("User Name")
     submit=SubmitField("Add")
 
 class Create_task(FlaskForm):
     name=StringField("Task Name",validators=[Length(max=256),DataRequired()])
-    description=StringField("Task Description",validators=[Length(max=10000)])
-    priority=RadioField("Priority", choices=[["0"," Low"],["1"," Medium"],["2"," High"]])
-    deadline=DateTimeField("Deadline",default=datetime.now(),validators=[DataRequired()])
+    description=StringField("Description",validators=[Optional()],widget=TextArea())
+    priority=RadioField("Priority",choices=[["0"," Low"],["1"," Medium"],["2"," High"]])
+    start_date=DateTimeField("Start Date",validators=[Optional()],format='%d-%m-%Y %I:%M %p')
+    deadline=DateTimeField("Deadline",validators=[Optional()],format='%d-%m-%Y %I:%M %p')
     add_user=SelectField("Assigning to User",validators=[DataRequired()])
     submit=SubmitField("Add Task")
+
+class Edit_task(FlaskForm):
+    name=StringField("Task Name",validators=[Length(max=256),DataRequired()])
+    description=StringField("Description",validators=[Optional()],widget=TextArea())
+    priority=RadioField("Priority", choices=[["0"," Low"],["1"," Medium"],["2"," High"]],validators=[DataRequired()])
+    start_date=DateTimeField("Start Date",validators=[Optional()],format='%d-%m-%Y %I:%M %p')
+    deadline=DateTimeField("Deadline",validators=[DataRequired()],format='%d-%m-%Y %I:%M %p')
+    is_done=BooleanField("Mark as done")
+    submit=SubmitField("Update Task")
+
+# class Add_task(FlaskForm):
+#     name=StringField("Task Name",validators=[Length(max=256),DataRequired()])
+#     time=TimeField("Deadline",validators=[DataRequired()],format='%H:%M')
+#     submit=SubmitField("Add Task")
+
 
 roles_users = db.Table('roles_users', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('role_id', db.Integer, db.ForeignKey('role.id')))
 assigned_to = db.Table('assigned_to', db.Column('user_id', db.Integer, db.ForeignKey('user.id')), db.Column('project_id', db.Integer, db.ForeignKey('project.id')))
@@ -102,18 +121,28 @@ class Project(db.Model):
 class Task(db.Model):
     id= db.Column(db.Integer,primary_key= True)
     name=db.Column(db.String(256))
-    description=db.Column(db.Binary)
+    description=db.Column(db.Text)
     is_done = db.Column(db.Boolean, default = False)
     create_date=db.Column(db.DateTime)
+    start_date=db.Column(db.DateTime)
     deadline=db.Column(db.DateTime)
     priority=db.Column(db.Integer) 
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
-    user = db.relationship('User',backref = db.backref('tasks'))
+    user = db.relationship('User',backref = db.backref('tasks'),foreign_keys=user_id)
     project_id=db.Column(db.Integer,db.ForeignKey('project.id'))
     project = db.relationship('Project',backref = db.backref('tasks'))
+    created_by_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    created_by = db.relationship('User',backref = db.backref('tasks_created'),foreign_keys=created_by_id)
 
 
-
+class MyTask(db.Model):
+    id= db.Column(db.Integer,primary_key= True)
+    title=db.Column(db.String(256))
+    start=db.Column(db.String(256))
+    end=db.Column(db.String(256))
+    backgroundColor=db.Column(db.String(256))
+    user_id=db.Column(db.Integer,db.ForeignKey('user.id'))
+    user = db.relationship('User',backref = db.backref('my_tasks'),foreign_keys=user_id)
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
@@ -122,8 +151,22 @@ security = Security(app, user_datastore)
 
 
 @app.route('/')
+@login_required
 def home():
-    return render_template('test.html', title= "Home")
+    num_projects=len(current_user.projects)
+    num_tasks=len(current_user.tasks)
+    today_tasks=0
+    week_tasks=0
+    for i in current_user.tasks:
+        if i.deadline and i.deadline.date()== date.today():
+            today_tasks+=1
+        if i.deadline:
+            d1 = i.deadline
+            d2 = datetime.today()
+            if d1.isocalendar()[1] == d2.isocalendar()[1] and d1.year == d2.year:
+                week_tasks+=1
+
+    return render_template('home.html', title= "Dashboard", tasks=current_user.tasks, datetime=datetime, num_projects=num_projects, num_tasks=num_tasks, today_tasks=today_tasks, week_tasks=week_tasks)
 
 
 
@@ -148,10 +191,10 @@ def create_user():
             db.session.add(u)
             db.session.commit()
         except:
-            flash('User could not be created', 'alert-danger')
+            flash('User could not be created', 'error')
             return redirect('/create_user')
 
-        flash('User Created', 'alert-success')
+        flash('User Created', 'success')
         return redirect('/create_user')
     return render_template('create_user.html',form=form)
 
@@ -159,7 +202,6 @@ def create_user():
 @app.route('/users')
 @login_required
 @roles_required('Admin')
-
 def users():
     u = User.query.all()
     return render_template('users.html', user_list = u)
@@ -169,7 +211,7 @@ def users():
 def user(id):
     is_admin=current_user.has_role("Admin")
     if (not is_admin) and current_user.id != int(id):
-        flash('Accessing other user profile not allowed', 'alert-danger')
+        flash('Accessing other user profile not allowed', 'error')
         return redirect('/')
     u = User.query.filter_by(id=id).first()
     is_profile_admin=u.has_role("Admin")
@@ -181,9 +223,9 @@ def user(id):
             db.session.commit()
 
         except:
-            flash('User details could not be changed', 'alert-danger')
+            flash('User details could not be changed', 'error')
             return redirect(f'/users/{id}')
-        flash('Profile Updated', 'alert-success')
+        flash('Profile Updated', 'success')
         return redirect(f'/users/{id}')
     return render_template('user.html',is_admin=is_admin, is_profile_admin = is_profile_admin,form = form,id=id)
 
@@ -200,12 +242,12 @@ def changepassword():
             if(verify_password(form.password.data,old_pass)):
                 u.password=hash_password(form.new_password.data)
                 db.session.commit() 
-                flash('Password is changed', 'alert-success')
+                flash('Password is changed', 'success')
             else:
-                flash('Incorrect Password Entered', 'alert-danger')
+                flash('Incorrect Password Entered', 'error')
                 return redirect('/changepassword')
         except:
-            flash('Password could not be changed', 'alert-danger')
+            flash('Password could not be changed', 'error')
             return redirect(f'/users/{id}')
 
     return render_template('change_password.html',form=form)
@@ -218,15 +260,16 @@ def delete_user():
     try:
         id=int(request.json['id'])
         if(id == current_user.id):
-            flash('User can not be deleted', 'alert-danger')
+            flash('User can not be deleted', 'error')
             return "not_deleted"
         u=User.query.filter_by(id=id).first()
         db.session.delete(u)
         db.session.commit()
-    except:
-        flash('User was not deleted', 'alert-danger')
+    except Exception as e:
+        print(e)
+        flash('User was not deleted', 'error')
         return "not deleted"
-    flash('User deleted successfully','alert-success')
+    flash('User deleted successfully','success')
     return "deleted"
 
 
@@ -244,9 +287,9 @@ def create_project():
 
         except Exception as e:
             print(e)
-            flash('Project could not be created', 'alert-danger')
+            flash('Project could not be created', 'error')
             return redirect('/create_project')
-        flash('Project Created', 'alert-success')
+        flash('Project Created', 'success')
         return redirect('/create_project')
     
 
@@ -267,18 +310,14 @@ def project(id):
     user_assigned=p.users
     supervisors=p.supervisors
     user_assigned=[i for i in  user_assigned if i not in supervisors]
-    choices=[]
-    for user in all_users:
-        if user not in user_assigned:
-            l=[]
-            l.append(user.id)
-            l.append(f'{user.name} ({user.id})')
-            choices.append(l)
     form = Show_Project(name=p.name,description=p.description)
     form1 = Assign_user() 
-    form1.user.choices=choices
     is_admin=current_user.has_role('Admin')
     is_manager=True if current_user in supervisors else False
+    task_list=[]
+    for i in p.tasks:
+        if i.user_id==current_user.id or i.created_by_id==current_user.id:
+            task_list.append(i)
 
 
     if (form.validate_on_submit() and request.form['form-name'] == 'form' and is_admin):
@@ -287,23 +326,29 @@ def project(id):
             p.description=form.description.data
             db.session.commit()
         except:
-            flash('Project details could not be changed', 'alert-danger')
+            flash('Project details could not be changed', 'error')
             return redirect(f'/projects/{id}')
-        flash('Project Updated', 'alert-success')
+        flash('Project Updated', 'success')
         return redirect(f'/projects/{id}')
+        
     if(form1.is_submitted() and request.form['form-name'] == 'form1' and (is_admin or is_manager)):
         try:
-            user_id=int(form1.user.data)
-            u=User.query.filter_by(id=user_id).first()
-            p.users.append(u)
-            db.session.commit()
-            flash('User was added to this project', 'alert-success') 
-            
+            user_mail=form1.user.data
+            u=User.query.filter_by(email=user_mail).first()
+            if u:
+                if u in p.users:
+                    flash('User already in project','error')
+                else:
+                    p.users.append(u)
+                    db.session.commit()
+                    flash('User was added to this project', 'success')
+            else:
+                flash('Entered User does not exist','error')
         except Exception as e:
             print(e)
-            flash('User was not added to the project','alert-danger')
+            flash('User was not added to the project','error')
         return redirect(f'/projects/{id}')       
-    return render_template('project.html',is_admin=is_admin,is_manager=is_manager,form = form,form1=form1,user_assigned=user_assigned,id=id,supervisors=supervisors)
+    return render_template('project.html',is_admin=is_admin,is_manager=is_manager,form = form,form1=form1,user_assigned=user_assigned,id=id,supervisors=supervisors, tasks=task_list, datetime=datetime)
 
 
 @app.route("/delete_project",methods=["POST"])
@@ -316,9 +361,9 @@ def delete_project():
         db.session.commit()
     except Exception as e:
         print(e)
-        flash('Project was not deleted', 'alert-danger')
+        flash('Project was not deleted', 'error')
         return "not deleted"
-    flash('Project deleted successfully','alert-success')
+    flash('Project deleted successfully','success')
     return "deleted"
 
 @app.route("/make_admin/<id>")
@@ -329,9 +374,9 @@ def make_admin(id):
         u=User.query.filter_by(id=id).first()
         user_datastore.add_role_to_user(u, 'Admin')
         db.session.commit()
-        flash('User was made admin','alert-success')
+        flash('User was made admin','success')
     except:
-        flash('User was not be made admin','alert-danger')
+        flash('User was not be made admin','error')
     
     return redirect(f'/users/{id}')
 
@@ -340,15 +385,15 @@ def make_admin(id):
 @roles_required('Admin')
 def remove_admin(id):
     if current_user.id == int(id):
-        flash('Can not be removed as an admin','alert-danger')
+        flash('Can not be removed as an admin','error')
         return redirect(f'/users/{id}')
     try:
         u=User.query.filter_by(id=id).first()
         user_datastore.remove_role_from_user(u, 'Admin')
         db.session.commit()
-        flash('User was removed as admin','alert-success')
+        flash('User was removed as admin','success')
     except:
-        flash('Can not be removed as an admin','alert-danger')
+        flash('Can not be removed as an admin','error')
     return redirect(f'/users/{id}')
 
 @app.route("/make_manager/<user_id>/<project_id>")
@@ -360,10 +405,10 @@ def make_manager(user_id,project_id):
         u=User.query.filter_by(id=user_id).first()
         p.supervisors.append(u)
         db.session.commit()
-        flash('User was made manager','alert-success')
+        flash('User was made manager','success')
     except Exception as e:
         print(e)
-        flash('User was not made manager','alert-danger')
+        flash('User was not made manager','error')
     return redirect(f'/projects/{project_id}')
 
 @app.route("/remove_manager/<user_id>/<project_id>")
@@ -375,10 +420,10 @@ def remove_manager(user_id,project_id):
         u=User.query.filter_by(id=user_id).first()
         p.supervisors.remove(u)
         db.session.commit()
-        flash('User was made assignee','alert-success')
+        flash('User was made assignee','success')
     except Exception as e:
         print(e)
-        flash('User was not made assignee','alert-danger')
+        flash('User was not made assignee','error')
     return redirect(f'/projects/{project_id}')
 
 @app.route("/remove_assignee/<user_id>/<project_id>")
@@ -394,10 +439,10 @@ def remove_assignee(user_id,project_id):
             u=User.query.filter_by(id=user_id).first()
             p.users.remove(u)
             db.session.commit()
-            flash('User was removed from project','alert-success')
+            flash('User was removed from project','success')
         except Exception as e:
             print(e)
-            flash('User was not removed from project','alert-danger')
+            flash('User was not removed from project','error')
     return redirect(f'/projects/{project_id}')
 
 @app.route("/create_task/<project_id>",methods=["POST","GET"])
@@ -412,23 +457,35 @@ def create_task(project_id):
     form=Create_task()
     choices=[]
     for user in p.users:
-        l=[]
-        l.append(str(user.id))
-        l.append(f'{user.name} ({user.id})')
-        choices.append(l)
+        if user.id != current_user.id:
+            l=[]
+            l.append(str(user.id))
+            l.append(f'{user.name} ({user.id})')
+            choices.append(l)
     form.add_user.choices=choices
     if form.validate_on_submit():
+        if form.start_date.data and form.deadline.data:
+            if form.start_date.data>form.deadline.data:
+                return redirect(f'/projects/{project_id}')
         try:
             u=User.query.filter_by(id=form.add_user.data).first()
-            print(form.description.data)
-            t=Task(name=form.name.data,description=bytes(form.description.data,"utf8"),deadline=form.deadline.data,priority=form.priority.data,project=p,user=u)
-            print(bytes(form.description.data,"utf8"))
+            # print(form.description.data)
+            
+            t=Task(name=form.name.data,priority=form.priority.data,project=p,user=u,create_date=datetime.now(),created_by=current_user)
+            if form.deadline.data:
+                t.deadline=form.deadline.data
+            if form.start_date.data:
+                t.start_date=form.start_date.data
+            file_name="files/description_id"+str(uuid.uuid1())
+            t.description=file_name
+            with open(file_name,"w") as file_object:
+                file_object.write(form.description.data)
             db.session.add(t)
             db.session.commit()
-            flash("Task was created","alert-success")
+            flash("Task was created","success")
         except Exception as e:
             print(e)
-            flash("Task was not created","alert-danger")
+            flash("Task was not created","error")
         return redirect(f'/projects/{project_id}')
     return render_template("create_task.html",form=form)
     
@@ -438,16 +495,129 @@ class Testform(FlaskForm):
 
 @app.route("/test1",methods=["GET","POST"])
 def testform():
-    ft=Task.query.filter_by(id=4).first()
+    ft=Task.query.filter_by(id=6).first()
 
     print (ft.description)
     return (ft.description)
+
+@app.route("/test2",methods=["GET","POST"])
+def test2form():
+
+        
+    return render_template('test1.html')
+
     
+@app.route("/edit_task/<task_id>",methods=["POST","GET"])
+@login_required
+def edit_task(task_id):
+    form=Edit_task()
+    t=Task.query.filter_by(id=task_id).first()
+    if current_user!=t.created_by:
+        return redirect('/')
+    if form.validate_on_submit():
+        try:
+            t.name=form.name.data
+            t.priority=form.priority.data
+            t.start_date=form.start_date.data
+            t.deadline=form.deadline.data
+            t.is_done=form.is_done.data
+            db.session.commit()
+            print("Inside validation")
+            with open(t.description,"w") as file_object:
+                file_object.write(form.description.data)
+            flash('The task is updated','success')
+        except:
+            flash('The task is not updated','error')
+        return redirect(f'/edit_task/{task_id}')
 
-@app.route("/calender",methods=["GET","POST"])
-def calender():
-    return render_template("calender.html")
+    low=""
+    medium=""
+    high=""
+    if(t.priority==0):
+        low="checked"
+    elif t.priority==1:
+        medium="checked"
+    else:
+        high="checked"
 
+    print(t.deadline)
+    form.name.data=t.name
+    form.start_date.data=t.start_date
+    form.deadline.data=t.deadline
+    file_name=t.description
+    form.is_done.data=t.is_done
+    with open(file_name) as f:
+        form.description.data=f.read()
+    
+    return render_template('edit_task.html',form=form, low_checked=low, medium_checked=medium, high_checked=high,assigned_to=t.user.name)
+
+
+@app.route("/view_task/<task_id>")
+@login_required
+def view_task(task_id):
+    t=Task.query.filter_by(id=task_id).first()
+    if current_user.id != t.user_id:
+        return redirect('/')
+    description=""
+    with open(t.description) as f:
+        description=f.read()
+
+    return render_template('view_task.html',t=t,description=description, datetime=datetime)
+
+@app.route("/delete_task/<task_id>",methods=["GET"])
+@login_required
+def delete_task(task_id):
+    t=Task.query.filter_by(id=task_id).first()
+    if current_user.id != t.created_by_id:
+        return redirect('/')
+    try:
+        db.session.delete(t)
+        db.session.commit()
+        flash("Task is deleted",'success')
+    except Exception as e:
+        print(e)
+        flash("Task is not deleted",'error')
+    return redirect(f'/projects/{t.project_id}')
+
+# @app.route("/calendar",methods=["GET","POST"])
+# @login_required
+# def calendar():
+#     t=Task.query.filter_by(user_id=current_user.id)
+#     return render_template("calendar.html", tasks=t)
+
+@app.route("/calendar",methods=["GET","POST"])
+@login_required
+def test_calendar():
+    t=Task.query.filter_by(user_id=current_user.id)
+    t1=MyTask.query.filter_by(user_id=current_user.id)
+    return render_template("test_calendar.html", tasks=t,saved_tasks=t1)
+
+# @app.route("/calendar_test",methods=["GET","POST"])
+
+# def calendar_test():
+#     t=MyTask.query.filter_by(user_id=current_user.id)
+#     form=Add_task()
+#     return render_template("calendar_test.html", my_tasks=t, form=form)
+
+
+@app.route("/save_mytask",methods=["POST"])
+def save_mytask():
+    r=request.json
+    try:
+        MyTask.query.filter_by(user_id=current_user.id).delete()
+        for i in r:
+
+            t=MyTask(start=i["start"],end=i["end"],backgroundColor=i["backgroundColor"],title=i["title"],user_id=current_user.id)
+            db.session.add(t)
+        db.session.commit()
+
+    except Exception as e:
+        print(e)
+        db.session.rollback()
+        return abort(500)
+
+    print(r)
+    return "abc"
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -482,7 +652,34 @@ if __name__ == "__main__":
 # db.session.commit()
 
 
-#fix catogery of default message
-#Add title to every page
-# add user should be put in modal and put this button in assigned users card
-#datetime validator 
+
+
+
+
+
+## FEATURES TO BE ADDED
+#Board view for each project with all tasks
+#Multiple folders
+#Each list should have board view
+#Calendar synchronization
+#chats
+# task column in column sizes
+#Task reporting and submission
+#dashboard icons in phone view
+#users make for smaller screen size
+# add search column for users
+
+
+
+
+
+
+
+##DASHBOARD IDEAS
+#dashboard would be profile page
+#List of project
+#Notifications
+
+
+#THINGS TO TAKE CARE OF WHIE USING IT IN OTHER DEVICES:
+#>>pip3 install -U Werkzeug==0.16.0

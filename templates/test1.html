@@ -1,24 +1,71 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <form method="POST">
-        {{form.hidden_tag()}}
-        <div class="form-group">
-            {{form.description(id="compose")}}
+
+<div class="container">
+    <div class="form-group">
+        <label>Date range:</label>
+
+        <div class="input-group date" id='datetimepicker1'>
+          <div class="input-group-prepend input-group-addon">
+            <span class="input-group-text">
+              <i class="far fa-calendar"></i>
+            </span>
+          </div>
+          <input type="datetime" class="form-control float-right" >
         </div>
-        {{form.submit}}
-    </form>
-    {% endblock %}
-    {% block script %}
-    <script src="/static/plugins/summernote/summernote-bs4.min.js"></script>
-    <!-- Page Script -->
-    <script>
-    $(function () {
-        //Add text editor
-        console.log("abcdefgh")
-        $('#compose').summernote()
-    })
-    </script>
+        <!-- /.input group -->
+      </div>
     
+        
+        <div class="form-group">
+            <label>Date range:</label>
+
+            <div class="input-group date" id='datetimepicker2'>
+              <div class="input-group-prepend input-group-addon">
+                <span class="input-group-text">
+                  <i class="far fa-calendar"></i>
+                </span>
+              </div>
+              <input type="datetime" class="form-control float-right">
+            </div>
+            <!-- /.input group -->
+          </div>
+          
+   
 {% endblock %}
 
+{% block script %}
+
+{% endblock %}
+
+{% block script_init %}
+
+$('#datetimepicker1').datetimepicker({
+    icons: {
+        time: "fa fa-clock",
+        date: "fa fa-calendar",
+        up: "fa fa-arrow-up",
+        down: "fa fa-arrow-down"
+
+    }
+    ,format: 'DD-MM-YYYY hh:mm A', useCurrent: false //Important!
+});
+$('#datetimepicker2').datetimepicker({
+    icons: {
+        time: "fa fa-clock",
+        date: "fa fa-calendar",
+        up: "fa fa-arrow-up",
+        down: "fa fa-arrow-down"
+
+    }
+    ,format: 'DD-MM-YYYY hh:mm A', useCurrent: false //Important!
+});
+
+$("#datetimepicker1").on("dp.change", function (e) {
+    $('#datetimepicker2').data("DateTimePicker").minDate(e.date);
+});
+$("#datetimepicker2").on("dp.change", function (e) {
+    $('#datetimepicker1').data("DateTimePicker").maxDate(e.date);
+});
+
+{% endblock %}

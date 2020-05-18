@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="POST">
+        {{form.hidden_tag()}}
+        
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">Edit Task</h3>
+            </div>
+            <!-- /.card-header -->
+            
+            <div class="card-body">
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="To:"> -->
+                <label>
+                    Mark as Done :
+                </label>
+                
+                <div  class="icheck-primary d-inline ml-2">
+                  <!-- <input type="checkbox" value="" name="todo1" id="todoCheck1" > -->
+                  {{form.is_done(id="todoCheck1")}}
+                  <label for="todoCheck1"></label>
+                </div>
+              </div>
+              <div class="form-group">
+              <label>Assigned to:</label>
+              {{assigned_to}}
+            </div>
+               
+
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="To:"> -->
+                <label>
+                    Title:
+                </label>
+                {{form.name (class="form-control", placeholder="Task Title")}}
+                
+              </div>
+
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="Subject:"> -->
+                <label>
+                    Start Date:
+                </label>
+                {{form.start_date (class="")}}
+                
+              </div>
+
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="Subject:"> -->
+                <label>
+                    Deadline:
+                </label>
+                {{form.deadline (class="")}}
+              </div>
+                <!-- <div class='input-group date' id='datetimepicker1'>
+                    <input type='text' class="" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+              </div> -->
+
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="To:"> -->
+                <label>
+                    Priority:
+                </label>
+                <!-- {{form.priority (class="form-control")}} -->
+                
+                    <!-- {{form.priority}} -->
+                    <div class="custom-control custom-radio">
+                        <input class="custom-control-input" type="radio" id="customRadio1" name="priority" value="0" {{low_checked}}>
+                        <label for="customRadio1" class="custom-control-label">Low</label>
+                    </div>
+
+                    <div class="custom-control custom-radio">
+                        <input class="custom-control-input" type="radio" id="customRadio2" name="priority" value="1" {{medium_checked}}>
+                        <label for="customRadio2" class="custom-control-label">Medium</label>
+                    </div>
+
+                    <div class="custom-control custom-radio">
+                        <input class="custom-control-input" type="radio" id="customRadio3" name="priority" value="2" {{high_checked}}>
+                        <label for="customRadio3" class="custom-control-label">High</label>
+                    </div>
+               
+            
+              </div>
+
+              <div class="form-group">
+                <label>
+                    Description:
+                </label>
+                  {{form.description(id="compose")}}
+              </div>
+              
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+              <div class="float-right">
+                
+                <!-- <button name="submit" type="submit" class="btn btn-primary"><i class="far fa-envelope"></i> Add task</button> -->
+    
+                {{form.submit (class="btn btn-primary btn-sm")}}
+              </div>
+            </div>
+            <!-- /.card-footer -->
+          </div>
+
+        
+    </form>
+
+    
+{% endblock %}

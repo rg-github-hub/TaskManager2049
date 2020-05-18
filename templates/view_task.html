@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card card-primary card-outline">
+    <div class="card-header">
+      <h3 class="card-title">{{t.name}}</h3>
+
+    </div>
+    <!-- /.card-header -->
+    <div class="card-body">
+      
+        <ul class="list-group list-group-unbordered mb-3">
+            <li class="list-group-item">
+                <label>Created by:</label>
+                {{t.created_by.name}}
+              </li>
+              <li class="list-group-item">
+                <label>Created on:</label>
+                {{t.create_date}}
+              </li>
+              {% if t.start_date %}
+              <li class="list-group-item">
+                <label>Start on:</label>
+                {{t.start_date}}
+              </li>
+              {% endif %}
+            {% if t.deadline %}
+            <li class="list-group-item">
+              <label> Deadline: </label>
+              
+                  {{t.deadline}}
+                  {% if not t.is_done %}
+                    {% set delta=t.deadline - datetime.now() %}
+                        {% if delta.days>=31 %}
+                        <small class="badge badge-success"><i class="far fa-clock"></i> {{(delta.days/30)| int}} {% if 1==(delta.days/30)| int %}month{% else%} months{% endif %}</small>
+                        {% elif delta.days>=7 %}
+                        <small class="badge badge-primary"><i class="far fa-clock"></i> {{(delta.days/7)| int}} {% if 1==(delta.days/7)| int %}week{% else%} weeks{% endif %}</small>       
+                        {% elif delta.days>=3 %}
+                        <small class="badge badge-warning"><i class="far fa-clock"></i> {{(delta.days) | int}} days</small>
+                        {% elif delta.days>=1 %}
+                        <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.days)| int}} {% if 1==(delta.days) |int %}day{% else%} days{% endif %}</small>
+                        {% elif delta.total_seconds()>=60*60 %}
+                        <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.total_seconds()/(60*60))| int}} {% if 1==(delta.total_seconds()/(60*60))| int %}hour{% else%} hours{% endif %}</small>
+                        {% elif delta.total_seconds()>=60 %}
+                        <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.total_seconds()/60)| int}} {% if 1==(delta.total_seconds()/60)| int %}minute{% else%} minutes{% endif %}</small>
+                        {% else %}
+                        <small class="badge badge-danger"><i class="far fa-clock"></i> Deadline missed </small>
+                        {% endif %}
+                    {% endif %}
+              
+            </li>
+            {% endif %}
+            <li class="list-group-item">
+              <label>Priority: </label>
+              
+                {% if t.priority==0 %}
+                <small class="badge badge-primary"> Low</small>
+        
+                {% elif t.priority==1 %}
+                <small class="badge badge-warning"> Medium</small>
+        
+                {% else %}
+                <small class="badge badge-danger"> High</small>
+
+                {% endif %}
+
+              
+            </li>
+            <li class="list-group-item">
+              <label>Description:</label><br>
+              {{description|safe}}
+            </li>
+          </ul>
+
+    </div>
+
+</div>
+
+
+
+
+
+{% endblock %}

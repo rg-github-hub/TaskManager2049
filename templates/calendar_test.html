@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% set page = "Calendar" %}
+{% block content %}
+    <!-- THE CALENDAR -->
+    <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="sticky-top mb-3">
+                <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-title">Draggable Events</h4>
+                  </div>
+                  <div class="card-body">
+                    <!-- the events -->
+                    <div id="external-events">
+                      <div class="external-event bg-success">Lunch</div>
+                      <div class="external-event bg-warning">Go home</div>
+                      <div class="external-event bg-info">Do homework</div>
+                      <div class="external-event bg-primary">Work on UI design</div>
+                      <div class="external-event bg-danger">Sleep tight</div>
+                      <div class="checkbox">
+                        <label for="drop-remove">
+                          <input type="checkbox" id="drop-remove">
+                          remove after drop
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Create Event</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="btn-group" style="width: 100%; margin-bottom: 10px;">
+                      <ul class="fc-color-picker" id="color-chooser">
+                        <li><a class="text-primary" href="#"><i class="fas fa-square"></i></a></li>
+                        <li><a class="text-warning" href="#"><i class="fas fa-square"></i></a></li>
+                        <li><a class="text-success" href="#"><i class="fas fa-square"></i></a></li>
+                        <li><a class="text-danger" href="#"><i class="fas fa-square"></i></a></li>
+                        <li><a class="text-secondary" href="#"><i class="fas fa-square"></i></a></li>
+                      </ul>
+                    </div>
+                    <!-- /btn-group -->
+                    <div class="input-group">
+                        {{form.name (class = 'form-control', id="new-event", placeholder = "Event Title")}}
+                      <div>
+                          {{form.time (class="")}}
+                      </div>
+                      <div class="input-group-append">
+                        {{form.submit(class = 'btn btn-primary', id="add-new-event")}}
+                      </div>
+                      <!-- /btn-group -->
+                    </div>
+                    <!-- /input-group -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /.col -->
+            <div class="col-md-9">
+    <div class="card card-primary card-outline">
+        <div class="card-header">
+          <h3 class="card-title"><i class="nav-icon far fa-calendar-alt"></i> Calendar</h3>
+        </div>
+    <div id="calendar" class="our-calendar"></div>
+    </div>
+{% endblock %}
+
+{% block script%}
+<!-- fullCalendar 2.2.5 -->
+<script src="/static/plugins/moment/moment.min.js"></script>
+<script src="/static/plugins/fullcalendar/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-daygrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-timegrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-interaction/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-bootstrap/main.min.js"></script>
+
+<!-- Page specific script -->
+<script>
+  $(function () {
+
+
+    function ini_events(ele) {
+      ele.each(function () {
+
+        // create an Event Object (http://arshaw.com/fullcalendar/docs/event_data/Event_Object/)
+        // it doesn't need to have a start or end
+        var eventObject = {
+          title: $.trim($(this).text()) // use the element's text as the event title
+        }
+
+        // store the Event Object in the DOM element so we can get to it later
+        $(this).data('eventObject', eventObject)
+
+        // make the event draggable using jQuery UI
+        $(this).draggable({
+          zIndex        : 1070,
+          revert        : true, // will cause the event to go back to its
+          revertDuration: 0  //  original position after the drag
+        })
+
+      })
+    }
+    ini_events($('#external-events div.external-event'))
+
+    /* initialize the calendar
+     -----------------------------------------------------------------*/
+     
+    // var date = new Date()
+    // var d    = date.getDate(),
+    //     m    = date.getMonth(),
+    //     y    = date.getFullYear()
+    var Calendar = FullCalendar.Calendar;
+    var calendarEl = document.getElementById('calendar');
+    var Draggable = FullCalendarInteraction.Draggable;
+
+    var containerEl = document.getElementById('external-events');
+    var checkbox = document.getElementById('drop-remove');
+    var calendarEl = document.getElementById('calendar');
+
+    // initialize the external events
+    // -----------------------------------------------------------------
+
+    new Draggable(containerEl, {
+      itemSelector: '.external-event',
+      eventData: function(eventEl) {
+        console.log(eventEl);
+        return {
+          title: eventEl.innerText,
+          backgroundColor: window.getComputedStyle( eventEl ,null).getPropertyValue('background-color'),
+          borderColor: window.getComputedStyle( eventEl ,null).getPropertyValue('background-color'),
+          textColor: window.getComputedStyle( eventEl ,null).getPropertyValue('color'),
+        };
+      }
+    });
+
+    
+    var calendar = new Calendar(calendarEl, {
+        // height: 600,
+      plugins: [ 'bootstrap', 'interaction', 'dayGrid'],
+      header    : {
+        left  : 'today',
+        center: 'title',
+        right: 'prev,next',
+      },
+      'themeSystem': 'bootstrap',
+      //events
+      events    : [
+          {% for i in tasks %}
+          {% if i.deadline or i.start_date %}
+          {% if loop.index != 1 %},
+          {% endif %}
+      {
+          title          : '{{i.name}}',
+          {% if i.start_date %}
+          start          : new Date({{i.start_date.year}}, {{i.start_date.month-1}},{{i.start_date.day}}, {{i.start_date.hour}}, {{i.start_date.minute}} ),
+          
+          {% if i.deadline %}
+            end         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+          {% else %}
+          start         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+
+          
+          {% if i.priority==0 %}
+          backgroundColor:'#007bff', //blue
+          borderColor:'#007bff', //blue
+          {% elif i.priority==1 %}
+          textColor:' #000000',
+          backgroundColor:'#ffc107',
+          borderColor:'#ffc107',
+          {% else %}
+          backgroundColor:'#dc3545',
+          borderColor:'#dc3545',
+          {% endif %}
+          allDay         : false,
+          url            : '/view_task/{{i.id}}'
+        }
+        {% endif %}
+        {% endfor %}
+      ],
+      eventClick: function(info) {
+    info.jsEvent.preventDefault(); // don't let the browser navigate
+
+    if (info.event.url) {
+        window.location.href = info.event.url;
+    }
+  },
+  
+      editable  : true,
+      droppable : true, // this allows things to be dropped onto the calendar !!!
+      drop      : function(info) {
+        // is the "remove after drop" checkbox checked?
+        if (checkbox.checked) {
+          // if so, remove the element from the "Draggable Events" list
+          info.draggedEl.parentNode.removeChild(info.draggedEl);
+        }
+      }    
+});
+
+    calendar.render();
+    // $('#calendar').fullCalendar()
+    /* ADDING EVENTS */
+    var currColor = '#3c8dbc' //Red by default
+    //Color chooser button
+    var colorChooser = $('#color-chooser-btn')
+    $('#color-chooser > li > a').click(function (e) {
+      e.preventDefault()
+      //Save color
+      currColor = $(this).css('color')
+      //Add color effect to button
+      $('#add-new-event').css({
+        'background-color': currColor,
+        'border-color'    : currColor
+      })
+    })
+    $('#add-new-event').click(function (e) {
+      e.preventDefault()
+      //Get value and make sure it is not null
+      var val = $('#new-event').val()
+      if (val.length == 0) {
+        return
+      }
+
+      //Create events
+      var event = $('<div />')
+      event.css({
+        'background-color': currColor,
+        'border-color'    : currColor,
+        'color'           : '#fff'
+      }).addClass('external-event')
+      event.html(val)
+      $('#external-events').prepend(event)
+
+      //Add draggable funtionality
+      ini_events(event)
+
+      //Remove event from text input
+      $('#new-event').val('')
+    })
+
+    })
+</script>
+
+{% endblock %}

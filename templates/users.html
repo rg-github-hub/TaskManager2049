@@ -1,62 +1,90 @@
 {% extends "base.html" %}
 {% set page = "Users" %}
 {% block content %}
-<div style='padding-bottom: 25px;'>
-<a href="/create_user" class = 'btn btn-info' ><i class="ion ion-person-add"></i>  Create New User</a>
+<table style="width:100%;">
+  <tr >
+    <td style="padding-left: 20px;">
+      <h3><i class="nav-icon fas fa-users"></i> Users</h3>
+    </td>
+    <td style="text-align: right;padding-right: 20px;" >
+        <a href="/create_user" class = 'btn btn-secondary' ><i class="ion ion-person-add"></i> Create New User</a>
+    </td>
+  </tr>
+</table>
 
-</div>
 
 
-<div class="card">
-    <div class="card-header">
-      <h3 class="card-title">Users</h3>
-    </div>
-    <!-- /.card-header -->
-    <div class="card-body">
-      <div id="jsGrid1"></div>
-    </div>
-    <!-- /.card-body -->
-  </div>
+
+      <ul class="our-users-list">
+    
+        <li class="users-header">
+          
+          <span>
+            #
+          </span>
+          <span>
+            
+          </span>
+          <span>
+            Name
+          </span>
+          <span>
+            <!-- class="project-list-profiles" -->
+            Email-id
+          </span>
+          <span>
+            
+          </span>
+        </li>
+    
+        {% for i in user_list %}    
+        
+        <li class="user-row" onclick="window.location='/users/{{i.id}}'">
+        
+          <span>
+            {{i.id}}
+          </span>
+          <span>
+            {% set first_name=i.name.split(" ")[0] %}
+               {% set last_name=i.name.split(" ")[-1] %}
+               {% set l= i.name.split(" ") | length %}
+              {% set color = ['535FFD','F78522','DF136C','BDB7C6','0B5742', '6750DF','597C7F'][i.id % 7] %}
+            
+          <div>
+            <img src="https://ui-avatars.com/api/?background={{color}}&color=fff&name={{first_name}} {% if l>1%} +{{last_name}} {% endif %}&bold=true&size=32&rounded=true" >
+          </div>
+        </span>
+          <span>
+             {{i.name}}
+          </span>
+          <span>
+            {{i.email}}
+          </span>
+          
+          <span>
+            
+            <div>
+          <a onclick="del({{i.id}})">
+              <i class="fas fa-trash" style="color:red"></i>
+              
+          </a>
+        </div>
+          
+        </span>
+        </li>
+        {% endfor %}
+        
+        
+      </ul>
+  
 {% endblock %}
 
 {% block script %}
-<script src="static/plugins/jsgrid/demos/db.js"></script>
-
-<script src="static/plugins/jsgrid/jsgrid.min.js"></script>
-
-<script src="static/dist/js/demo.js"></script>
 <script>
-    var clients = [
-{% for i in user_list %}
-{% if loop.index == 1 %}
-{
-  "Name": "{{i.name}}",
-  "Employee Id": {{i.id}},
-}
-{% else %}
-    ,{
-  "Name": "{{i.name}}",
-  "Employee Id": {{i.id}},
-}
-{% endif %}
-
-{% endfor %}
-];
-    $(function () {
-        $("#jsGrid1").jsGrid({
-  width: "100%",
-  //height: "100%",
-  inserting: false,
-  editing: false,
-  sorting: true,
-  paging: true,
-
-
-  data: clients,
-  selecting: true,
-  onItemDeleted: function(args) {
-    //console.log(args.item['Employee Id'])
-    const Data = {"id" : args.item['Employee Id']}
+  function del(id){
+    var r = confirm("Are you sure you want to delete the project with id: "+id+"?");
+    if(r==true){
+      const Data = {"id" : id}
 		const otherPram={
 			headers:{
 				"Content-Type":"application/json; charset=UTF-8"
@@ -65,31 +93,10 @@
 			method:"POST"
 		};
 		fetch('/delete_user', otherPram).then(function(response){location.reload()});
-                    
-                },
-  fields: [{
-    name: "Name",
-    width: 100
-
-  },{
-    name: "Employee Id",
-    width: 40
-  },
-  {
-                name: "Remove",
-                width:20,
-                type: "control",
-                modeSwitchButton: false,
-                editButton: false,
-                
-                
+    }
+    if (!e) var e = window.event;
+    e.cancelBubble = true;
+    if (e.stopPropagation) e.stopPropagation();
   }
-],
-  rowClick: function(args) {
-    console.log(args.item['Employee Id'])
-    window.location.href = "/users/" + args.item['Employee Id'];
-  }
-});
-    });
-  </script>
+</script>
 {% endblock %}

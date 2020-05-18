@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>AdminLTE 3 | Log in</title>
+  <title>Abhay | Log in</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -17,9 +17,11 @@
   <link rel="stylesheet" href="/static/dist/css/adminlte.min.css">
   <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+      <!-- Toastr -->
+      <link rel="stylesheet" href="/static/plugins/toastr/toastr.min.css">
 </head>
 <body class="hold-transition login-page">
-  {%include "messages.html" %}
+  
 <div class="login-box">
   <div class="login-logo">
     <a href="/"><b>Abhay</b></a>
@@ -85,7 +87,7 @@
             <div class="icheck-primary">
               <!-- <input type="checkbox" id="remember"> -->
               {{login_user_form.remember}}
-              <label>
+              <label for="remember">
                 Remember Me
               </label>
             </div>
@@ -121,6 +123,17 @@
 <script src="/static/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="/static/dist/js/adminlte.min.js"></script>
+<script src="/static/plugins/toastr/toastr.min.js"></script>
+  <script>
+            $(function() {
+        
+                
+
+                {%include "messages.html" %}
+                
+
+            })
+  </script>
 
 </body>
 </html>

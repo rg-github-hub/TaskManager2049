@@ -30,19 +30,39 @@
               <div class="form-group">
                 <!-- <input class="form-control" placeholder="Subject:"> -->
                 <label>
+                    Start Date:
+                </label>
+                
+                
+                <div class="input-group date" id='datetimepicker1'>
+                  <div class="input-group-prepend input-group-addon">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar"></i>
+                    </span>
+                  </div>
+                  <!-- <input type="datetime" class="form-control float-right" > -->
+                  {{form.start_date(class="form-control float-right")}}
+                </div>
+                
+                
+              </div>
+              {% for i in form.start_date.errors %}
+                {{i}}
+              {% endfor %}
+              <div class="form-group">
+                <!-- <input class="form-control" placeholder="Subject:"> -->
+                <label>
                     Deadline:
                 </label>
-                {{form.deadline (class="")}}
-                {% for i in form.add_user.errors %}
-                    {{i}}
-                {% endfor %}
-
-                <!-- <div class='input-group date' id='datetimepicker1'>
-                    <input type='text' class="form-control" />
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
+                <div class="input-group date" id='datetimepicker2'>
+                  <div class="input-group-prepend input-group-addon">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar"></i>
                     </span>
-                </div> -->
+                  </div>
+                  <!-- <input type="datetime" class="form-control float-right" > -->
+                  {{form.deadline(class="form-control float-right")}}
+                </div>
               </div>
 
               <div class="form-group">
@@ -54,7 +74,7 @@
                 
                     <!-- {{form.priority}} -->
                     <div class="custom-control custom-radio">
-                        <input class="custom-control-input" type="radio" id="customRadio1" name="priority" value="0">
+                        <input class="custom-control-input" type="radio" id="customRadio1" name="priority" value="0" checked>
                         <label for="customRadio1" class="custom-control-label">Low</label>
                     </div>
 
@@ -75,7 +95,9 @@
                 <label>
                     Description:
                 </label>
-                  {{form.description(id="compose")}}
+                
+                  {{form.description(id="compose" )}}
+                
               </div>
               
             </div>
@@ -84,7 +106,7 @@
               <div class="float-right">
                 
                 <!-- <button name="submit" type="submit" class="btn btn-primary"><i class="far fa-envelope"></i> Add task</button> -->
-                {{form.submit}}
+                {{form.submit (class="btn btn-primary btn-sm")}}
               </div>
             </div>
             <!-- /.card-footer -->
@@ -96,7 +118,38 @@
     
 {% endblock %}
   
-    
+{% block script_init %}
+
+$('#datetimepicker1').datetimepicker({
+    icons: {
+        time: "fa fa-clock",
+        date: "fa fa-calendar",
+        up: "fa fa-arrow-up",
+        down: "fa fa-arrow-down"
+
+    }
+    ,format: 'DD-MM-YYYY hh:mm A', useCurrent: false //Important!
+});
+$('#datetimepicker2').datetimepicker({
+    icons: {
+        time: "fa fa-clock",
+        date: "fa fa-calendar",
+        up: "fa fa-arrow-up",
+        down: "fa fa-arrow-down"
+
+    }
+    ,format: 'DD-MM-YYYY hh:mm A', useCurrent: false //Important!
+});
+
+$("#datetimepicker1").on("dp.change", function (e) {
+    $('#datetimepicker2').data("DateTimePicker").minDate(e.date);
+});
+$("#datetimepicker2").on("dp.change", function (e) {
+    $('#datetimepicker1').data("DateTimePicker").maxDate(e.date);
+});
+
+{% endblock %}
+
     
 
 

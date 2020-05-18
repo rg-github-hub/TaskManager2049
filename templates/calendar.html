@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% set page = "Calendar" %}
+{% block content %}
+    <!-- THE CALENDAR -->
+    
+    <div class="card card-primary card-outline">
+        <div class="card-header">
+          <h3 class="card-title"><i class="nav-icon far fa-calendar-alt"></i> Calendar</h3>
+        </div>
+    <div id="calendar" class="our-calendar"></div>
+    </div>
+{% endblock %}
+
+{% block script%}
+<!-- fullCalendar 2.2.5 -->
+<script src="/static/plugins/moment/moment.min.js"></script>
+<script src="/static/plugins/fullcalendar/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-daygrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-timegrid/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-interaction/main.min.js"></script>
+<script src="/static/plugins/fullcalendar-bootstrap/main.min.js"></script>
+
+<!-- Page specific script -->
+<script>
+  $(function () {
+
+
+    /* initialize the calendar
+     -----------------------------------------------------------------*/
+    //Date for the calendar events (dummy data)
+    
+    var Calendar = FullCalendar.Calendar;
+    var calendarEl = document.getElementById('calendar');
+
+    // initialize the external events
+    // -----------------------------------------------------------------
+    var calendar = new Calendar(calendarEl, {
+        // height: 600,
+      plugins: [ 'bootstrap', 'interaction', 'dayGrid'],
+      header    : {
+        left  : 'today',
+        center: 'title',
+        right: 'prev,next',
+      },
+      'themeSystem': 'bootstrap',
+      //Random default events
+      events    : [
+          {% for i in tasks %}
+          {% if i.deadline or i.start_date %}
+          {% if loop.index != 1 %},
+          {% endif %}
+      {
+          title          : '{{i.name}}',
+          {% if i.start_date %}
+          start          : new Date({{i.start_date.year}}, {{i.start_date.month-1}},{{i.start_date.day}}, {{i.start_date.hour}}, {{i.start_date.minute}} ),
+          
+          {% if i.deadline %}
+            end         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+          {% else %}
+          start         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
+          {% endif %}
+
+          
+          //start          : new Date(y,{{i.deadline.month}}-1 , {{i.deadline.day}}, 10, 30),
+          
+          {% if i.priority==0 %}
+          backgroundColor:'#007bff', //blue
+          borderColor:'#007bff', //blue
+          {% elif i.priority==1 %}
+          textColor:' #000000',
+          backgroundColor:'#ffc107',
+          borderColor:'#ffc107',
+          {% else %}
+          backgroundColor:'#dc3545',
+          borderColor:'#dc3545',
+          {% endif %}
+          allDay         : false,
+          url            : '/view_task/{{i.id}}'
+        }
+        {% endif %}
+        {% endfor %}
+      ],
+      eventClick: function(info) {
+    info.jsEvent.preventDefault(); // don't let the browser navigate
+
+    if (info.event.url) {
+        window.location.href = info.event.url;
+    }
+  },
+  
+      editable  : false,
+      droppable : false, // this allows things to be dropped onto the calendar !!!
+       });
+
+    calendar.render();
+    // $('#calendar').fullCalendar()
+
+    })
+</script>
+
+{% endblock %}

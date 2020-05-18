@@ -1,0 +1,73 @@
+<div class="card card-primary card-outline" style="height: 538px ">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="ion ion-clipboard mr-1"></i>
+        Tasks
+      </h3>
+                        
+    
+    </div>
+    <!-- /.card-header -->
+    <div class="card-body overflow-auto">
+      <ul class="todo-list" data-widget="todo-list">
+        {% for i in tasks %}
+            
+            <li>
+            <!-- drag handle -->
+            <span class="handle">
+                <i class="fas fa-ellipsis-v"></i>
+                <i class="fas fa-ellipsis-v"></i>
+            </span>
+            <!-- checkbox -->
+            <div  class="icheck-primary d-inline ml-2">
+                <input type="checkbox" value="" name="todo1" id="todoCheck1" {% if i.is_done %} checked {% endif %}disabled>
+                <label for="todoCheck1"></label>
+            </div>
+            <!-- todo text -->
+            
+            <span class="text">{{i.name}}</span>
+            <!-- Emphasis label -->
+            {% if not i.is_done %}
+            {% if i.priority==0 %}
+            <small class="badge badge-primary"> Low</small>
+    
+            {% elif i.priority==1 %}
+            <small class="badge badge-warning"> Medium</small>
+    
+            {% else %}
+            <small class="badge badge-danger"> High</small>
+    
+            {% endif %}
+            {% if i.deadline %}
+            {% set delta=i.deadline - datetime.now() %}
+            
+            {% if delta.days>=31 %}
+            <small class="badge badge-success"><i class="far fa-clock"></i> {{(delta.days/30)| int}} {% if 1==(delta.days/30)| int %}month{% else%} months{% endif %}</small>
+            {% elif delta.days>=7 %}
+            <small class="badge badge-primary"><i class="far fa-clock"></i> {{(delta.days/7)| int}} {% if 1==(delta.days/7)| int %}week{% else%} weeks{% endif %}</small>       
+            {% elif delta.days>=3 %}
+            <small class="badge badge-warning"><i class="far fa-clock"></i> {{(delta.days) | int}} days</small>
+            {% elif delta.days>=1 %}
+            <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.days)| int}} {% if 1==(delta.days) |int %}day{% else%} days{% endif %}</small>
+            {% elif delta.total_seconds()>=60*60 %}
+            <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.total_seconds()/(60*60))| int}} {% if 1==(delta.total_seconds()/(60*60))| int %}hour{% else%} hours{% endif %}</small>
+            {% elif delta.total_seconds()>=60 %}
+            <small class="badge badge-danger"><i class="far fa-clock"></i> {{(delta.total_seconds()/60)| int}} {% if 1==(delta.total_seconds()/60)| int %}minute{% else%} minutes{% endif %}</small>
+            {% else %}
+            <small class="badge badge-danger"><i class="far fa-clock"></i> Deadline missed </small>
+            {% endif %}
+            {% endif %}
+            {% endif %}
+    
+            <!-- General tools such as edit or delete-->
+            <div class="tools">
+              
+              <a href="/view_task/{{i.id}}"style="color: inherit;"><i class="fas fa-eye"></i></a>
+             
+            </div>
+            </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <!-- /.card-body -->
+    </div>
