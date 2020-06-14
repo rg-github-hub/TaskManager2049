@@ -4,7 +4,7 @@
 
 {% if is_admin %}
 
-<div class="card card-success card-outline">
+<div class="card" style="border-top: 3px solid #195a79;">
     <div class="card-header">
       <h3 class="card-title">Project Details</h3>
     </div>
@@ -49,7 +49,7 @@
     
       <!-- /.card-body -->
     
-          {{form.submit(class = 'btn btn-success')}}
+          {{form.submit(class = 'btn btn-project')}}
       
         </div>
     </form>
@@ -57,7 +57,7 @@
 
 
 {% else %}
-<div class="card card-success card-outline">
+<div class="card" style="border-top: 3px solid #195a79;">
   <div class="card-header">
     <h3 class="card-title">Project Details</h3>
   </div>

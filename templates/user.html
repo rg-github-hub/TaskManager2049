@@ -53,17 +53,17 @@
 
       <!-- /.card-body -->
     
-          {{form.submit(class = 'btn btn-secondary')}}
+          {{form.submit(class = 'btn btn-user')}}
       
       
     </form>
 
     {% if is_profile_admin %}
 
-    <a href="/remove_admin/{{id}}" class = 'btn btn-secondary'>Remove Admin</a>
+    <a href="/remove_admin/{{id}}" class = 'btn btn-user'>Remove Admin</a>
 
     {% else %}
-    <a href="/make_admin/{{id}}" class = 'btn btn-secondary'>Make Admin</a>
+    <a href="/make_admin/{{id}}" class = 'btn btn-user'>Make Admin</a>
     {% endif %}
 
   </div>
@@ -96,7 +96,7 @@
         </div>
       </div>
 
-    <a href="/changepassword" class = 'btn btn-secondary'>Change Password</a>
+    <a href="/changepassword" class = 'btn btn-user'>Change Password</a>
 </div>
 
 

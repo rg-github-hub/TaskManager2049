@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% set page = "Calendar" %}
 {% block content %}
+<table style="width:100%;">
+  <tr >
+    <td style="padding-left: 20px;">
+      <h3><i class="far fa-calendar-alt"></i> My Calendar</h3><br>
+    </td>
+    <td style="text-align: right;padding-right: 20px;" >
+        
+    </td>
+  </tr>
+</table>
     <!-- THE CALENDAR -->
     
     <div class="row">
@@ -9,51 +19,35 @@
           <div class="card card-primary card-outline">
             <div class="card-header">
               <h4 class="card-title">Draggable Tasks</h4>
-              
                 <button id="save" type="button" class="btn btn-primary float-right" >Save</button>
             </div>
             <div class="card-body">
               <!-- the events -->
               <div id="external-events">
-                
-                
               </div>
             </div>
-            <!-- /.card-body -->
           </div>
-          <!-- /.card -->
-
-
           <div class="card card-primary card-outline">
             <div class="card-header">
               <h3 class="card-title">Create Task</h3>
             </div>
             <div class="card-body">
               <div class="btn-group" style="width: 100%; margin-bottom: 10px;">
-                <!--<button type="button" id="color-chooser-btn" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown">Color <span class="caret"></span></button>-->
                 <ul class="fc-color-picker" id="color-chooser">
-                  <li><a class="text-primary" href="#"><i class="fas fa-square"></i></a></li>
-                  <li><a class="text-warning" href="#"><i class="fas fa-square"></i></a></li>
-                  <li><a class="text-success" href="#"><i class="fas fa-square"></i></a></li>
-                  <li><a class="text-danger" href="#"><i class="fas fa-square"></i></a></li>
-                  <li><a class="text-muted" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-color1" href="#"><i class="fas fa-square "></i></a></li>
+                  <li><a class="text-color2" href="#"><i class="fas fa-square "></i></a></li>
+                  <li><a class="text-color4" href="#"><i class="fas fa-square "></i></a></li>
+                  <li><a class="text-color3" href="#"><i class="fas fa-square"></i></a></li>
+                  <li><a class="text-color5" href="#"><i class="fas fa-square"></i></a></li>
                 </ul>
               </div>
-              <!-- /btn-group -->
-              
               <div class="input-group">
                 <input id="new-event" type="text" class="form-control" placeholder="Event Title">
-
                 <div class="input-group-append">
                   <button id="add-new-event" type="button" class="btn btn-primary">Add</button>
                 </div>
-                
-                
-                
-                <!-- /btn-group -->
+                </div>
               </div>
-              <!-- /input-group -->
-            </div>
           </div>
           
 
@@ -62,13 +56,11 @@
 
 
             <div class="small-box bg-danger" id="trash" style="height: 105px;">
-              <div class="inner" >
+              <div class="inner" style="color:#e99595 "><br>
                 <h4>Drag here <br>to Delete</h4>
-      
-                
               </div>
               <div class="icon">
-                <i class="fa fa-trash" style="color: white"></i>
+                <i class="fa fa-trash" style="color: #e45c5c"></i>
               </div>
               
             </div>
@@ -182,23 +174,16 @@
           {% if loop.index != 1 %},
           {% endif %}
       {
-        
         editable:false,
-        
           title          : '{{i.name}}',
           {% if i.start_date %}
           start          : new Date({{i.start_date.year}}, {{i.start_date.month-1}},{{i.start_date.day}}, {{i.start_date.hour}}, {{i.start_date.minute}} ),
-          
           {% if i.deadline %}
             end         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
           {% endif %}
           {% else %}
           start         : new Date({{i.deadline.year}}, {{i.deadline.month-1}},{{i.deadline.day}}, {{i.deadline.hour}}, {{i.deadline.minute}} ),
           {% endif %}
-
-          
-          //start          : new Date(y,{{i.deadline.month}}-1 , {{i.deadline.day}}, 10, 30),
-          
           {% if i.priority==0 %}
           backgroundColor:'#007bff', //blue
           borderColor:'#007bff', //blue
@@ -216,16 +201,6 @@
         {% endif %}
 
         {% endfor %}
-
-
-
-
-
-
-
-
-
-
         {% if tasks.count()>0 %}
           ,
         {% endif %}
@@ -251,23 +226,12 @@
         console.log(info)
       },
       eventDragStop: function(e) {
-            
-            
             let trashEl = document.getElementById('trash');
             var rect=trashEl.getBoundingClientRect();
-            
             let x1 = trashEl.offsetLeft;
-            
             let x2 = trashEl.offsetLeft + trashEl.offsetWidth;
             let y1 = trashEl.offsetTop;
             let y2 = trashEl.offsetTop + trashEl.offsetHeight;
-            console.log(x1)
-            console.log(x2)
-            console.log(y1)
-            console.log(y2)
-            console.log(e.jsEvent.pageX)
-            console.log(e.jsEvent.pageY)
-            console.log(rect)
             if (e.jsEvent.pageX >= rect.left && e.jsEvent.pageX <= rect.right &&
                 e.jsEvent.pageY >=rect.top  && e.jsEvent.pageY <= rect.bottom) {
                     e.event.remove();
@@ -294,6 +258,7 @@
       e.preventDefault()
       //Save color
       currColor = $(this).css('color')
+      console.log($(this).css('background-color'))
       //Add color effect to button
       $('#add-new-event').css({
         'background-color': currColor,
@@ -307,6 +272,7 @@
       if (val.length == 0) {
         return
       }
+
 
       //Create events
       var event = $('<div />')

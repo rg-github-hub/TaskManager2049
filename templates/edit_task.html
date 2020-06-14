@@ -38,29 +38,47 @@
                 
               </div>
 
+
               <div class="form-group">
                 <!-- <input class="form-control" placeholder="Subject:"> -->
                 <label>
                     Start Date:
                 </label>
-                {{form.start_date (class="")}}
+                
+                
+                <div class="input-group date" id='datetimepicker1'>
+                  <div class="input-group-prepend input-group-addon">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar-alt"></i>
+                    </span>
+                  </div>
+                  <!-- <input type="datetime" class="form-control float-right" > -->
+                  {{form.start_date(class="form-control float-right")}}
+                </div>
+                
                 
               </div>
-
+              {% for i in form.start_date.errors %}
+                {{i}}
+              {% endfor %}
               <div class="form-group">
                 <!-- <input class="form-control" placeholder="Subject:"> -->
                 <label>
                     Deadline:
                 </label>
-                {{form.deadline (class="")}}
-              </div>
-                <!-- <div class='input-group date' id='datetimepicker1'>
-                    <input type='text' class="" />
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
+                <div class="input-group date" id='datetimepicker2'>
+                  <div class="input-group-prepend input-group-addon">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar-alt"></i>
                     </span>
+                  </div>
+                  <!-- <input type="datetime" class="form-control float-right" > -->
+                  {{form.deadline(class="form-control float-right")}}
                 </div>
-              </div> -->
+              </div>
+
+              
+
 
               <div class="form-group">
                 <!-- <input class="form-control" placeholder="To:"> -->

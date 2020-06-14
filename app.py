@@ -184,16 +184,13 @@ def create():
 def create_user():
     form=Create_user()
     if (form.validate_on_submit()):
-
-        # u = User(name = form.name.data, email=form.email.data, password=hash_password(form.password.data))
         try:
             u = user_datastore.create_user(name = form.name.data, email=form.email.data, password=hash_password(form.password.data))
-            db.session.add(u)
+            db.session.add(u)    
             db.session.commit()
-        except:
+        except :
             flash('User could not be created', 'error')
             return redirect('/create_user')
-
         flash('User Created', 'success')
         return redirect('/create_user')
     return render_template('create_user.html',form=form)
@@ -221,7 +218,6 @@ def user(id):
             u.name=form.name.data
             u.email=form.email.data
             db.session.commit()
-
         except:
             flash('User details could not be changed', 'error')
             return redirect(f'/users/{id}')
@@ -278,21 +274,17 @@ def delete_user():
 @roles_required('Admin')
 def create_project():
     form=Create_Project()
-   
     if (form.validate_on_submit()):
         try:
             p=Project(name=form.name.data,description=form.description.data)
             db.session.add(p)
             db.session.commit()
-
         except Exception as e:
             print(e)
             flash('Project could not be created', 'error')
             return redirect('/create_project')
         flash('Project Created', 'success')
         return redirect('/create_project')
-    
-
     return render_template("create_project.html",form=form)
 
 @app.route('/projects')
@@ -306,20 +298,17 @@ def projects():
 @login_required
 def project(id):
     p = Project.query.filter_by(id=id).first()
-    all_users=User.query.all()
     user_assigned=p.users
     supervisors=p.supervisors
     user_assigned=[i for i in  user_assigned if i not in supervisors]
     form = Show_Project(name=p.name,description=p.description)
     form1 = Assign_user() 
     is_admin=current_user.has_role('Admin')
-    is_manager=True if current_user in supervisors else False
     task_list=[]
+    is_manager=True if current_user in supervisors else False
     for i in p.tasks:
         if i.user_id==current_user.id or i.created_by_id==current_user.id:
             task_list.append(i)
-
-
     if (form.validate_on_submit() and request.form['form-name'] == 'form' and is_admin):
         try:
             p.name=form.name.data
@@ -432,9 +421,7 @@ def remove_assignee(user_id,project_id):
     p=Project.query.filter_by(id=project_id).first()
     is_admin=current_user.has_role('Admin')
     is_manager=True if current_user in p.supervisors else False
-    
     if is_admin or is_manager:
-
         try:
             u=User.query.filter_by(id=user_id).first()
             p.users.remove(u)
@@ -469,8 +456,6 @@ def create_task(project_id):
                 return redirect(f'/projects/{project_id}')
         try:
             u=User.query.filter_by(id=form.add_user.data).first()
-            # print(form.description.data)
-            
             t=Task(name=form.name.data,priority=form.priority.data,project=p,user=u,create_date=datetime.now(),created_by=current_user)
             if form.deadline.data:
                 t.deadline=form.deadline.data
@@ -493,18 +478,7 @@ class Testform(FlaskForm):
     description=StringField("Description",validators=[Optional()],widget=TextArea())
     submit=SubmitField()
 
-@app.route("/test1",methods=["GET","POST"])
-def testform():
-    ft=Task.query.filter_by(id=6).first()
 
-    print (ft.description)
-    return (ft.description)
-
-@app.route("/test2",methods=["GET","POST"])
-def test2form():
-
-        
-    return render_template('test1.html')
 
     
 @app.route("/edit_task/<task_id>",methods=["POST","GET"])
@@ -529,7 +503,6 @@ def edit_task(task_id):
         except:
             flash('The task is not updated','error')
         return redirect(f'/edit_task/{task_id}')
-
     low=""
     medium=""
     high=""
@@ -539,8 +512,6 @@ def edit_task(task_id):
         medium="checked"
     else:
         high="checked"
-
-    print(t.deadline)
     form.name.data=t.name
     form.start_date.data=t.start_date
     form.deadline.data=t.deadline
@@ -561,7 +532,6 @@ def view_task(task_id):
     description=""
     with open(t.description) as f:
         description=f.read()
-
     return render_template('view_task.html',t=t,description=description, datetime=datetime)
 
 @app.route("/delete_task/<task_id>",methods=["GET"])
@@ -655,7 +625,10 @@ if __name__ == "__main__":
 
 
 
-
+##DASHBOARD IDEAS
+#dashboard would be profile page
+#List of project
+#Notifications
 
 ## FEATURES TO BE ADDED
 #Board view for each project with all tasks
@@ -669,16 +642,15 @@ if __name__ == "__main__":
 #users make for smaller screen size
 # add search column for users
 
+##CURRENT TO-DO
 
 
 
 
 
 
-##DASHBOARD IDEAS
-#dashboard would be profile page
-#List of project
-#Notifications
+
+
 
 
 #THINGS TO TAKE CARE OF WHIE USING IT IN OTHER DEVICES:
