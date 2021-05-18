@@ -1,0 +1,1 @@
+return redirect(f'/users/{id}')

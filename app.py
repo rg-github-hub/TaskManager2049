@@ -11,22 +11,22 @@ from datetime import datetime,date
 import uuid 
 
 from wtforms.widgets import TextArea
-
+# czxxzbydawemifjv
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '^&fdijfoisJIFDJFOI3483&(*&'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:abhay1234@localhost/png'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:rahulgupta@localhost/db'
 app.config['SECURITY_PASSWORD_SALT'] = 'dfdgsdfsadfasg'
 # app.config['SECURITY_REGISTERABLE'] = True
 # app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_RECOVERABLE'] = True
 db = SQLAlchemy(app)
-
+ 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'aggarwal.abhay1999@gmail.com'
+app.config['MAIL_USERNAME'] = 'rg19961970@gmail.com'
 app.config['MAIL_PASSWORD'] = 'czxxzbydawemifjv'
-app.config['SECURITY_EMAIL_SENDER'] = 'aggarwal.abhay1999@gmail.com'
+app.config['SECURITY_EMAIL_SENDER'] = 'rg19961970@gmail.com'
 mail = Mail(app)
 
 
@@ -102,6 +102,10 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary =roles_users, backref = db.backref('users', lazy = 'dynamic'))
     projects = db.relationship('Project', secondary =assigned_to, backref = db.backref('users', lazy = 'dynamic'))
     projects_supervised = db.relationship('Project', secondary =supervises, backref = db.backref('supervisors', lazy = 'dynamic'))
+    def __str__(self):
+        return self.name
+    def __repr__(self):
+        return self.name 
     #ensure a person can only supervise if they are a superviser role
     #ensure that a superviser must also be assigned to the project
 
@@ -220,10 +224,11 @@ def user(id):
             db.session.commit()
         except:
             flash('User details could not be changed', 'error')
-            return redirect(f'/users/{id}')
+            # return redirect(f'/users/{id}')
         flash('Profile Updated', 'success')
         return redirect(f'/users/{id}')
     return render_template('user.html',is_admin=is_admin, is_profile_admin = is_profile_admin,form = form,id=id)
+
 
 @app.route("/changepassword",methods=['GET','POST'])
 @login_required
@@ -590,7 +595,7 @@ def save_mytask():
     return "abc"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8080,host="localhost")
 
 
     #flask shell
